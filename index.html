@@ -30,7 +30,7 @@
       user-select: none;
     }
 
-    /* Tela de Login / Barreira */
+    /* Tela de Login / Cadastro (Barreira de Segurança) */
     .login-overlay {
       position: fixed;
       inset: 0;
@@ -51,6 +51,9 @@
     }
     .login-card h2 { font-size: 1.3rem; margin-bottom: 6px; color: var(--text-color); }
     .login-card p { font-size: 0.82rem; color: #64748b; margin-bottom: 20px; }
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: #f1f5f9; padding: 4px; border-radius: 10px; }
+    .auth-tab { flex: 1; padding: 8px; font-size: 0.8rem; font-weight: 700; border: none; background: none; border-radius: 8px; cursor: pointer; color: #64748b; }
+    .auth-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
     /* Área de Trabalho */
     .desktop {
@@ -243,24 +246,6 @@
     }
     .start-item:hover { background: var(--primary); color: white; }
 
-    /* Menu do Botão Direito */
-    .context-menu {
-      position: absolute;
-      background: #ffffff;
-      border: 1px solid var(--panel-border);
-      box-shadow: var(--shadow);
-      border-radius: 12px;
-      padding: 6px;
-      display: none;
-      flex-direction: column;
-      z-index: 10000;
-      width: 230px;
-    }
-    .context-menu button {
-      background: none; border: none; padding: 9px 12px; text-align: left; font-size: 0.82rem; font-weight: 600; color: var(--text-color); border-radius: 8px; cursor: pointer;
-    }
-    .context-menu button:hover { background: var(--primary); color: white; }
-
     /* Janelas */
     .window {
       position: absolute;
@@ -392,19 +377,24 @@
     .hidden { display: none !important; }
   </style>
 </head>
-<body oncontextmenu="openContextMenu(event)">
+<body>
 
-  <!-- Tela de Login / Barreira de Segurança -->
+  <!-- Tela de Login / Cadastro Dinâmico -->
   <div class="login-overlay" id="login-modal">
     <div class="login-card">
-      <h2>☁️ CloudDesktop Login</h2>
-      <p>Digite seu e-mail e senha para entrar no sistema.</p>
+      <h2>☁️ CloudDesktop</h2>
+      <p>Faça login ou crie sua conta para entrar.</p>
       
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Entrar</button>
+        <button class="auth-tab" id="tab-register" onclick="switchAuthMode('register')">Criar Conta</button>
+      </div>
+
       <div class="form-group" style="text-align:left;"><label>E-mail</label><input type="email" id="auth-email" placeholder="seu@email.com"></div>
       <div class="form-group" style="text-align:left;"><label>Senha</label><input type="password" id="auth-pass" placeholder="••••••••"></div>
 
-      <div style="display:flex; gap:8px; margin-top:14px;">
-        <button class="btn" onclick="realizarLogin()" style="width:100%;">Entrar</button>
+      <div style="margin-top:14px;">
+        <button class="btn" id="auth-action-btn" onclick="executarAutenticacao()" style="width:100%;">Entrar no Sistema</button>
       </div>
     </div>
   </div>
@@ -673,6 +663,9 @@
     </div>
     <div class="window-body">
       <div class="form-group"><label>Imagem de Fundo:</label><input type="file" accept="image/*" onchange="uploadWallpaper(event)"></div>
+      <div style="margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+        <button class="btn btn-danger" onclick="fazerLogout()" style="width: 100%;">Sair da Conta</button>
+      </div>
     </div>
   </div>
 
@@ -707,21 +700,20 @@
 
     let currentExplorerFolder = 'root';
     let demoStep = 1;
+    let authMode = 'login'; // 'login' ou 'register'
 
     // Execução Automática no onload
     window.onload = () => {
-      // Verificar barreira de login local
       const usuarioLogado = localStorage.getItem('clouddesktop_user_logged');
       if (usuarioLogado) {
         document.getElementById('login-modal').style.display = 'none';
+        loadState(usuarioLogado);
       }
 
-      loadState();
       updateClock();
       setInterval(updateClock, 1000);
       renderAll();
 
-      // Assistente executa na entrada
       setTimeout(() => {
         if (!state.dismissTutorial && usuarioLogado) {
           openTutorialWindow();
@@ -732,22 +724,73 @@
       }, 400);
     };
 
-    // Função de Barreira de Login
-    function realizarLogin() {
-      const emailDigitado = document.getElementById('auth-email').value.trim();
-      const senhaDigitada = document.getElementById('auth-pass').value.trim();
+    // Alternar entre abas de Entrar e Criar Conta
+    function switchAuthMode(mode) {
+      authMode = mode;
+      const btn = document.getElementById('auth-action-btn');
+      const tabLogin = document.getElementById('tab-login');
+      const tabRegister = document.getElementById('tab-register');
 
-      if (emailDigitado === "eufernandoneto@gmail.com" && senhaDigitada !== "") {
-        localStorage.setItem('clouddesktop_user_logged', emailDigitado);
+      if (mode === 'login') {
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        btn.innerText = 'Entrar no Sistema';
+      } else {
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        btn.innerText = 'Cadastrar Conta';
+      }
+    }
+
+    // Processo de Login ou Cadastro Real
+    function executarAutenticacao() {
+      const email = document.getElementById('auth-email').value.trim();
+      const senha = document.getElementById('auth-pass').value.trim();
+
+      if (!email || !senha) {
+        alert("Preencha o e-mail e a senha corretamente.");
+        return;
+      }
+
+      // Buscar usuários salvos no navegador
+      let usuariosCadastrados = JSON.parse(localStorage.getItem('clouddesktop_usuarios_db') || '{}');
+
+      if (authMode === 'register') {
+        if (usuariosCadastrados[email]) {
+          alert("Este e-mail já está cadastrado! Faça login.");
+          return;
+        }
+        // Salva novo usuário
+        usuariosCadastrados[email] = { senha: senha };
+        localStorage.setItem('clouddesktop_usuarios_db', JSON.stringify(usuariosCadastrados));
+        
+        // Loga automaticamente
+        localStorage.setItem('clouddesktop_user_logged', email);
         document.getElementById('login-modal').style.display = 'none';
+        loadState(email);
+        renderAll();
+        alert("Conta criada com sucesso!");
+        if (!state.dismissTutorial) openTutorialWindow();
+      } else {
+        // Modo Login: Verifica se o e-mail existe e a senha bate
+        if (!usuariosCadastrados[email] || usuariosCadastrados[email].senha !== senha) {
+          alert("E-mail não cadastrado ou senha incorreta. Verifique os dados!");
+          return;
+        }
+
+        // Sucesso no login
+        localStorage.setItem('clouddesktop_user_logged', email);
+        document.getElementById('login-modal').style.display = 'none';
+        loadState(email);
         renderAll();
         checkAndPromptOrganization();
-        if (!state.dismissTutorial) {
-          openTutorialWindow();
-        }
-      } else {
-        alert("E-mail incorreto ou senha inválida. Use o e-mail exato: eufernandoneto@gmail.com");
+        if (!state.dismissTutorial) openTutorialWindow();
       }
+    }
+
+    function fazerLogout() {
+      localStorage.removeItem('clouddesktop_user_logged');
+      location.reload();
     }
 
     function updateClock() {
@@ -788,25 +831,11 @@
       document.onmouseup = () => document.removeEventListener('mousemove', onMove);
     }
 
-    function openContextMenu(e) {
-      if (e.target.closest('.window') || e.target.closest('.draggable-widget')) return;
-      e.preventDefault();
-      const menu = document.getElementById('context-menu');
-      if (menu) {
-        menu.style.display = 'flex';
-        menu.style.left = e.pageX + 'px';
-        menu.style.top = e.pageY + 'px';
-      }
-    }
-
     document.addEventListener('click', () => {
       document.getElementById('start-menu').style.display = 'none';
-      const menu = document.getElementById('context-menu');
-      if (menu) menu.style.display = 'none';
       document.getElementById('global-search-results').style.display = 'none';
     });
 
-    // Nomes sem título automáticos
     function generateUniqueName(baseName, existingList) {
       if (!existingList.includes(baseName)) return baseName;
       let counter = 1;
@@ -816,7 +845,6 @@
       return `${baseName} ${counter}`;
     }
 
-    // Assistente de Organização Automático na Entrada
     function checkAndPromptOrganization() {
       const unnamedNotes = state.notes.filter(n => n.title.startsWith('Sem Nome'));
       const unnamedFolders = state.folders.filter(f => f.startsWith('Sem Nome'));
@@ -887,7 +915,6 @@
       }
     }
 
-    // Tutorial Interativo Simulado
     function openTutorialWindow() { openWindow('win-tutorial'); updateDemoScreen(); }
     function dismissTutorialForever() {
       state.dismissTutorial = true;
@@ -927,7 +954,6 @@
       updateDemoScreen();
     }
 
-    // Pesquisa Global na Barra de Tarefas
     function handleGlobalSearch(query) {
       const resultsContainer = document.getElementById('global-search-results');
       const cleanQuery = query.trim().toLowerCase();
@@ -990,7 +1016,6 @@
       resultsContainer.style.display = 'flex';
     }
 
-    // Bloco de Notas com Salvamento Direto em Pastas
     function openNoteEditor(id = '', title = '', folder = 'root', body = '') {
       document.getElementById('note-id').value = id || 'n-' + Date.now();
       document.getElementById('note-title').value = title;
@@ -1020,7 +1045,6 @@
       checkAndPromptOrganization();
     }
 
-    // Explorador e Criação de Pastas
     function createNewFolder() {
       let name = prompt("Digite o nome da nova pasta:");
       if (name === null) return;
@@ -1072,7 +1096,6 @@
       });
     }
 
-    // Lixeira e Exclusão
     function moveToTrash(e, itemType, itemId) {
       e.stopPropagation();
       if (itemType === 'folder') {
@@ -1132,7 +1155,6 @@
       }
     }
 
-    // Agenda e Widget de Compromissos
     function renderCalendar() {
       const grid = document.getElementById('cal-grid');
       const monthYear = document.getElementById('cal-month-year');
@@ -1185,7 +1207,6 @@
       renderWidgets();
     }
 
-    // Kanban e Finanças com Botões ✕
     function addKanbanTask() {
       let title = document.getElementById('kanban-title').value.trim();
       const priority = document.getElementById('kanban-priority').value;
@@ -1288,7 +1309,6 @@
       document.getElementById('fin-total').innerText = `R$ ${net.toFixed(2)}`;
     }
 
-    // Mídias
     function handleMediaUpload(e) {
       const file = e.target.files[0];
       const folder = document.getElementById('media-folder-select').value;
@@ -1320,84 +1340,6 @@
       openWindow('win-photo-viewer');
     }
 
-    // Widgets
-    function addWidgetToDesktop(type) {
-      state.widgets.push({ id: 'w-' + Date.now(), type, x: 100, y: 100, locked: false });
-      saveState();
-      renderWidgets();
-    }
-
-    function toggleLockWidget(id) {
-      const w = state.widgets.find(item => item.id === id);
-      if (w) { w.locked = !w.locked; saveState(); renderWidgets(); }
-    }
-
-    function removeWidget(id) {
-      state.widgets = state.widgets.filter(w => w.id !== id);
-      saveState();
-      renderWidgets();
-    }
-
-    function renderWidgets() {
-      const container = document.getElementById('widgets-container');
-      container.innerHTML = '';
-      state.widgets.forEach(w => {
-        const div = document.createElement('div');
-        div.className = `draggable-widget ${w.locked ? 'locked' : ''}`;
-        div.style.left = w.x + 'px';
-        div.style.top = w.y + 'px';
-
-        div.onmousedown = (e) => {
-          if (w.locked || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-          let shiftX = e.clientX - div.getBoundingClientRect().left;
-          let shiftY = e.clientY - div.getBoundingClientRect().top;
-          function onMove(ev) {
-            w.x = ev.clientX - shiftX;
-            w.y = ev.clientY - shiftY;
-            div.style.left = w.x + 'px';
-            div.style.top = w.y + 'px';
-          }
-          document.addEventListener('mousemove', onMove);
-          document.onmouseup = () => { document.removeEventListener('mousemove', onMove); saveState(); };
-        };
-
-        const lockIcon = w.locked ? '🔒' : '🔓';
-
-        if (w.type === 'appointments') {
-          div.innerHTML = `
-            <div class="widget-header"><span class="widget-title">📅 Seus Compromissos</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <div style="max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
-              ${state.events.length === 0 ? '<span style="font-size:0.75rem; color:#64748b;">Nenhum compromisso.</span>' : state.events.map(e => `
-                <div style="font-size:0.75rem; background:white; padding:6px; border-radius:8px; border:1px solid #cbd5e1; display:flex; justify-content:space-between; align-items:center;">
-                  <div><b>${e.date}</b> (${e.time || 'Dia todo'})<br>${e.title}</div>
-                  <button class="btn-delete-item" onclick="removeCalendarEvent('${e.id}')">✕</button>
-                </div>
-              `).join('')}
-            </div>
-          `;
-        } else if (w.type === 'tasks') {
-          div.innerHTML = `
-            <div class="widget-header"><span class="widget-title">📌 Tarefas</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <input type="text" placeholder="Nova tarefa..." onkeypress="if(event.key==='Enter'){state.tasks.push(this.value); saveState(); renderWidgets();}" style="width:100%; padding:4px; font-size:0.8rem;">
-            <div style="font-size:0.78rem; margin-top:6px;">${state.tasks.map((t, idx)=>`<div style="display:flex; justify-content:space-between; align-items:center;"><span>• ${t}</span><button class="btn-delete-item" onclick="state.tasks.splice(${idx},1); saveState(); renderWidgets();">✕</button></div>`).join('')}</div>
-          `;
-        } else if (w.type === 'clock') {
-          div.innerHTML = `
-            <div class="widget-header"><span class="widget-title">⏰ Relógio</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <h2 style="text-align:center; color:var(--primary); font-weight:800;">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</h2>
-          `;
-        } else if (w.type === 'finance') {
-          let total = state.finance.reduce((acc, f) => acc + f.val, 0);
-          div.innerHTML = `
-            <div class="widget-header"><span class="widget-title">📈 Sobra de Dinheiro</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <h3 style="text-align:center; color:${total >= 0 ? '#10b981' : '#ef4444'};">R$ ${total.toFixed(2)}</h3>
-          `;
-        }
-        container.appendChild(div);
-      });
-    }
-
-    // Persistência de Dados no LocalStorage
     function renderFolders() {
       const container = document.getElementById('desktop');
       document.querySelectorAll('.desktop .dynamic-folder').forEach(e => e.remove());
@@ -1433,12 +1375,40 @@
       reader.readAsDataURL(file);
     }
 
-    function saveState() { localStorage.setItem('virtual_os_friendly_state', JSON.stringify(state)); }
-    function loadState() {
-      const saved = localStorage.getItem('virtual_os_friendly_state');
+    // Salvamento isolado por usuário no LocalStorage
+    function saveState() {
+      const currentUser = localStorage.getItem('clouddesktop_user_logged');
+      if (currentUser) {
+        localStorage.setItem('virtual_os_state_' + currentUser, JSON.stringify(state));
+      }
+    }
+
+    function loadState(userEmail) {
+      const saved = localStorage.getItem('virtual_os_state_' + userEmail);
       if (saved) {
-        state = { ...state, ...JSON.parse(saved) };
-        if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
+        try {
+          state = { ...state, ...JSON.parse(saved) };
+          if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
+        } catch (e) {
+          console.error("Erro ao carregar estado do usuário", e);
+        }
+      } else {
+        // Estado limpo para novos usuários
+        state = {
+          wallpaper: '',
+          folders: [],
+          notes: [],
+          tasks: [],
+          events: [],
+          finance: [],
+          kanban: [],
+          mediaFiles: [],
+          trash: [],
+          widgets: [],
+          currentDate: new Date(),
+          selectedDateStr: new Date().toISOString().split('T')[0],
+          dismissTutorial: false
+        };
       }
     }
   </script>
