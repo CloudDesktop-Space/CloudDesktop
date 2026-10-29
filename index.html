@@ -237,7 +237,7 @@
     <div class="taskbar-clock" id="taskbar-clock">18:00</div>
   </div>
 
-  <!-- Script Firebase com a Chave Corrigida -->
+  <!-- Script Firebase com a Chave Exata do Painel -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -288,7 +288,7 @@
       try { await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value); } catch (e) { alert(e.message); }
     };
     window.registerWithEmail = async () => {
-      try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value); alert("Conta criada!"); } catch (e) { alert(e.message); }
+      try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value); alert("Conta criada com sucesso!"); } catch (e) { alert(e.message); }
     };
     window.loginWithGoogle = async () => {
       try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { alert(e.message); }
