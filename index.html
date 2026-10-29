@@ -25,7 +25,7 @@
       color: var(--text-color); user-select: none;
     }
 
-    /* Modal de Login Local */
+    /* Modal de Login Simples */
     .login-overlay {
       position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px);
       z-index: 99999; display: flex; align-items: center; justify-content: center;
@@ -131,17 +131,18 @@
 </head>
 <body>
 
-  <!-- Tela de Login Local -->
+  <!-- Tela de Login com Entrar e Criar Conta -->
   <div class="login-overlay" id="login-modal">
     <div class="login-card">
       <h2>☁️ CloudDesktop Login</h2>
-      <p>Acesse com seu e-mail e senha.</p>
+      <p>Gerencie sua conta e sessões locais.</p>
       
       <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" value="eufernandoneto@gmail.com" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="auth-pass" placeholder="••••••••"></div>
 
       <div style="display:flex; gap:8px; margin-top:14px;">
         <button class="btn" onclick="localLogin()" style="flex:1;">Entrar</button>
+        <button class="btn btn-secondary" onclick="localRegister()" style="flex:1;">Criar Conta</button>
       </div>
     </div>
   </div>
@@ -239,7 +240,7 @@
     <div class="taskbar-clock" id="taskbar-clock">18:00</div>
   </div>
 
-  <!-- Script de Armazenamento Local (LocalStorage) -->
+  <!-- Script Local de Autenticação e Dados -->
   <script>
     let state = {
       folders: [],
@@ -256,7 +257,6 @@
         document.getElementById('taskbar-clock').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }, 1000);
 
-      // Verificar se já estava logado
       const loggedUser = localStorage.getItem('clouddesktop_user');
       if (loggedUser) {
         document.getElementById('login-modal').style.display = 'none';
@@ -269,11 +269,26 @@
 
     window.localLogin = () => {
       const email = document.getElementById('auth-email').value.trim();
-      if (!email) {
-        alert("Insira um e-mail válido.");
+      const pass = document.getElementById('auth-pass').value.trim();
+      if (!email || !pass) {
+        alert("Preencha o e-mail e a senha.");
         return;
       }
       localStorage.setItem('clouddesktop_user', email);
+      document.getElementById('user-display-email').innerText = email;
+      document.getElementById('login-modal').style.display = 'none';
+      loadStateFromLocalStorage(email);
+    };
+
+    window.localRegister = () => {
+      const email = document.getElementById('auth-email').value.trim();
+      const pass = document.getElementById('auth-pass').value.trim();
+      if (!email || !pass) {
+        alert("Preencha o e-mail e a senha para criar a conta.");
+        return;
+      }
+      localStorage.setItem('clouddesktop_user', email);
+      alert("Conta criada e sessão iniciada com sucesso!");
       document.getElementById('user-display-email').innerText = email;
       document.getElementById('login-modal').style.display = 'none';
       loadStateFromLocalStorage(email);
@@ -484,7 +499,7 @@
       q = q.trim().toLowerCase();
       if (!q) { box.style.display = 'none'; return; }
       let res = [];
-      state.notes.notes && state.notes.forEach(n => { if (n.title.toLowerCase().includes(q)) res.push({ name: n.title, type: 'Nota', action: () => openNoteEditor(n.id) }); });
+      state.notes.forEach(n => { if (n.title.toLowerCase().includes(q)) res.push({ name: n.title, type: 'Nota', action: () => openNoteEditor(n.id) }); });
       state.folders.forEach(f => { if (f.toLowerCase().includes(q)) res.push({ name: f, type: 'Pasta', action: () => openExplorer(f) }); });
       
       if (res.length === 0) { box.innerHTML = '<div style="font-size:0.8rem; color:#64748b; padding:8px;">Nenhum resultado.</div>'; }
