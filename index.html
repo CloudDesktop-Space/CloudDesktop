@@ -25,6 +25,7 @@
       color: var(--text-color); user-select: none;
     }
 
+    /* Modal de Login Local */
     .login-overlay {
       position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px);
       z-index: 99999; display: flex; align-items: center; justify-content: center;
@@ -35,6 +36,7 @@
     .login-card h2 { font-size: 1.3rem; margin-bottom: 6px; color: var(--text-color); }
     .login-card p { font-size: 0.82rem; color: #64748b; margin-bottom: 20px; }
 
+    /* Área de Trabalho */
     .desktop {
       position: absolute; inset: 0 0 var(--taskbar-height) 0; padding: 20px;
       display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
@@ -52,6 +54,7 @@
     .icon svg { width: 36px; height: 36px; margin-bottom: 6px; }
     .icon span { font-size: 0.75rem; font-weight: 600; text-align: center; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); word-break: break-word; }
 
+    /* Barra de Tarefas */
     .taskbar-container {
       position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
       height: var(--taskbar-height); background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(20px);
@@ -84,6 +87,7 @@
     .user-profile { display: flex; align-items: center; gap: 8px; color: white; font-size: 0.8rem; font-weight: 600; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; }
     .taskbar-clock { color: #ffffff; font-size: 0.85rem; font-weight: 600; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.2); }
 
+    /* Menu Iniciar */
     .start-menu {
       position: absolute; bottom: calc(var(--taskbar-height) + 20px); left: 50%; transform: translateX(-50%);
       width: 400px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);
@@ -96,6 +100,7 @@
     }
     .start-item:hover { background: var(--primary); color: white; }
 
+    /* Janelas */
     .window {
       position: absolute; width: 560px; background: var(--panel-bg); backdrop-filter: blur(20px);
       border-radius: 16px; border: 1px solid var(--panel-border); box-shadow: var(--shadow);
@@ -126,18 +131,17 @@
 </head>
 <body>
 
-  <!-- Tela de Login (Apenas E-mail e Senha) -->
+  <!-- Tela de Login Local -->
   <div class="login-overlay" id="login-modal">
     <div class="login-card">
       <h2>☁️ CloudDesktop Login</h2>
-      <p>Entre com seu e-mail e senha para salvar seus dados.</p>
+      <p>Acesse com seu e-mail e senha.</p>
       
-      <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" value="eufernandoneto@gmail.com" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="auth-pass" placeholder="••••••••"></div>
 
       <div style="display:flex; gap:8px; margin-top:14px;">
-        <button class="btn" onclick="loginWithEmail()" style="flex:1;">Entrar</button>
-        <button class="btn btn-secondary" onclick="registerWithEmail()" style="flex:1;">Criar Conta</button>
+        <button class="btn" onclick="localLogin()" style="flex:1;">Entrar</button>
       </div>
     </div>
   </div>
@@ -229,32 +233,14 @@
       <input type="text" class="taskbar-search-input" placeholder="Pesquisar..." oninput="handleGlobalSearch(this.value)">
     </div>
     <div class="user-profile">
-      <span id="user-display-email">...</span>
-      <button class="btn btn-danger" onclick="logoutFirebase()" style="padding:4px 8px; font-size:0.7rem;">Sair</button>
+      <span id="user-display-email">eufernandoneto@gmail.com</span>
+      <button class="btn btn-danger" onclick="localLogout()" style="padding:4px 8px; font-size:0.7rem;">Sair</button>
     </div>
     <div class="taskbar-clock" id="taskbar-clock">18:00</div>
   </div>
 
-  <!-- Script Firebase (Sem dependência do Google Auth) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAuWkVLy6Ex73LR-WN9EbopxfzWpR77oUc",
-      authDomain: "clouddesktop-c0b72.firebaseapp.com",
-      databaseURL: "https://clouddesktop-c0b72-default-rtdb.firebaseio.com",
-      projectId: "clouddesktop-c0b72",
-      storageBucket: "clouddesktop-c0b72.firebasestorage.app",
-      messagingSenderId: "374612968153",
-      appId: "1:374612968153:web:999e871df8014517e5f4c8"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
-
+  <!-- Script de Armazenamento Local (LocalStorage) -->
+  <script>
     let state = {
       folders: [],
       notes: [],
@@ -269,52 +255,49 @@
       setInterval(() => {
         document.getElementById('taskbar-clock').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }, 1000);
-    };
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
+      // Verificar se já estava logado
+      const loggedUser = localStorage.getItem('clouddesktop_user');
+      if (loggedUser) {
         document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('user-display-email').innerText = user.email;
-        await loadStateFromFirebase(user.uid);
+        document.getElementById('user-display-email').innerText = loggedUser;
+        loadStateFromLocalStorage(loggedUser);
       } else {
         document.getElementById('login-modal').style.display = 'flex';
-        document.getElementById('user-display-email').innerText = 'Convidado';
       }
-    });
-
-    window.loginWithEmail = async () => {
-      try {
-        await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
-      } catch (e) { alert("Erro ao entrar: " + e.message); }
     };
 
-    window.registerWithEmail = async () => {
-      try {
-        await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
-        alert("Conta criada com sucesso!");
-      } catch (e) { alert("Erro ao criar conta: " + e.message); }
+    window.localLogin = () => {
+      const email = document.getElementById('auth-email').value.trim();
+      if (!email) {
+        alert("Insira um e-mail válido.");
+        return;
+      }
+      localStorage.setItem('clouddesktop_user', email);
+      document.getElementById('user-display-email').innerText = email;
+      document.getElementById('login-modal').style.display = 'none';
+      loadStateFromLocalStorage(email);
     };
 
-    window.logoutFirebase = () => signOut(auth);
+    window.localLogout = () => {
+      localStorage.removeItem('clouddesktop_user');
+      location.reload();
+    };
 
-    window.saveState = async () => {
-      const user = auth.currentUser;
-      if (user) {
+    window.saveState = () => {
+      const email = localStorage.getItem('clouddesktop_user') || 'eufernandoneto@gmail.com';
+      localStorage.setItem('clouddesktop_state_' + email, JSON.stringify(state));
+    };
+
+    function loadStateFromLocalStorage(email) {
+      const saved = localStorage.getItem('clouddesktop_state_' + email);
+      if (saved) {
         try {
-          await set(ref(db, 'users/' + user.uid + '/desktopState'), state);
-        } catch (e) { console.error("Erro ao salvar:", e); }
+          state = { ...state, ...JSON.parse(saved) };
+        } catch (e) { console.error("Erro ao carregar dados locais:", e); }
       }
-    };
-
-    async function loadStateFromFirebase(userId) {
-      try {
-        const snapshot = await get(ref(db, 'users/' + userId + '/desktopState'));
-        if (snapshot.exists()) {
-          state = { ...state, ...snapshot.val() };
-        }
-        renderAll();
-        checkAndPromptOrganization();
-      } catch (e) { console.error("Erro ao carregar:", e); }
+      renderAll();
+      checkAndPromptOrganization();
     }
 
     window.renderAll = () => {
@@ -501,7 +484,7 @@
       q = q.trim().toLowerCase();
       if (!q) { box.style.display = 'none'; return; }
       let res = [];
-      state.notes.forEach(n => { if (n.title.toLowerCase().includes(q)) res.push({ name: n.title, type: 'Nota', action: () => openNoteEditor(n.id) }); });
+      state.notes.notes && state.notes.forEach(n => { if (n.title.toLowerCase().includes(q)) res.push({ name: n.title, type: 'Nota', action: () => openNoteEditor(n.id) }); });
       state.folders.forEach(f => { if (f.toLowerCase().includes(q)) res.push({ name: f, type: 'Pasta', action: () => openExplorer(f) }); });
       
       if (res.length === 0) { box.innerHTML = '<div style="font-size:0.8rem; color:#64748b; padding:8px;">Nenhum resultado.</div>'; }
