@@ -32,7 +32,6 @@
     window.fbGet = get;
     window.fbChild = child;
 
-    // Verificar se já existe um usuário logado na sessão do navegador
     window.onload = async () => {
       const loggedUserKey = localStorage.getItem('clouddesktop_db_user');
       if (loggedUserKey) {
@@ -180,41 +179,6 @@
     .taskbar-search-input:focus { width: 240px; background: rgba(255, 255, 255, 0.22); border-color: var(--primary); }
     .taskbar-search-icon { position: absolute; left: 8px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); pointer-events: none; }
 
-    .global-search-results {
-      position: absolute;
-      bottom: calc(var(--taskbar-height) + 15px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 440px;
-      max-height: 360px;
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--panel-border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 14px;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 9999;
-      overflow-y: auto;
-    }
-    .search-res-group { font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 4px; }
-    .search-res-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    .search-res-item:hover { background: var(--primary); color: white; }
-    .search-res-path { font-size: 0.68rem; color: #64748b; }
-
     .taskbar-clock { color: #ffffff; font-size: 0.85rem; font-weight: 600; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.2); }
 
     .start-menu {
@@ -287,7 +251,6 @@
 
     .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: rgba(79, 70, 229, 0.08); padding: 8px 12px; border-radius: 12px; }
     .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-    .cal-day-name { font-size: 0.7rem; font-weight: 800; color: #64748b; padding: 6px 0; text-transform: uppercase; }
     .cal-day { font-size: 0.78rem; padding: 8px 0; border-radius: 10px; cursor: pointer; background: #ffffff; border: 1px solid #e2e8f0; font-weight: 600; transition: all 0.15s; }
     .cal-day:hover { background: var(--primary); color: white; transform: scale(1.05); }
 
@@ -474,13 +437,12 @@
       document.getElementById('auth-action-btn').innerText = mode === 'login' ? 'Entrar no Sistema' : 'Cadastrar Conta';
     }
 
-    // Gerenciamento de Login e Cadastro direto no Realtime Database
     async function executarAutenticacaoDatabase() {
       const email = document.getElementById('auth-email').value.trim();
       const pass = document.getElementById('auth-pass').value.trim();
       if (!email || !pass) return alert("Preencha e-mail e senha.");
 
-      const safeKey = email.replace(/[.#$\/\[\]]/g, "_"); // Limpa o e-mail para virar uma chave válida no Firebase
+      const safeKey = email.replace(/[.#$\/\[\]]/g, "_");
       const dbRef = window.fbRef(window.fbDb);
 
       try {
@@ -491,7 +453,6 @@
             alert("Este e-mail já está cadastrado! Faça login.");
             return;
           }
-          // Cria o usuário e dados iniciais no Database
           const novoUsuario = { senha: pass, dadosOS: state };
           await window.fbSet(window.fbRef(window.fbDb, 'registros_usuarios/' + safeKey), novoUsuario);
           
@@ -501,18 +462,16 @@
           alert("Conta criada com sucesso!");
           window.renderAll();
         } else {
-          // Modo Login: Verifica se o e-mail existe e a senha bate
           if (!snapshot.exists()) {
             alert("E-mail não encontrado! Crie uma conta primeiro.");
             return;
           }
           const userData = snapshot.val();
           if (userData.senha !== pass) {
-            alert("Senha incorreta! As informações não batem.");
+            alert("Senha incorreta!");
             return;
           }
 
-          // Login aprovado
           localStorage.setItem('clouddesktop_db_user', safeKey);
           currentUserId = safeKey;
           if (userData.dadosOS) state = { ...state, ...userData.dadosOS };
@@ -554,7 +513,6 @@
     }
 
     window.renderAll = function() {
-      renderFolders();
       renderExplorer(currentExplorerFolder);
       renderTrash();
       renderCalendar();
@@ -623,11 +581,15 @@
 
     function renderCalendar() {
       const grid = document.getElementById('cal-grid');
-      document.getElementById('cal-month-year').innerText = state.currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      document.getElementById('cal-month-year').innerText = state.currentDate ? new Date(state.currentDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : '';
       grid.innerHTML = '';
       for(let i=1; i<=30; i++) grid.innerHTML += `<div class="cal-day">${i}</div>`;
     }
-    function changeMonth(d) { state.currentDate.setMonth(state.currentDate.getMonth() + d); renderCalendar(); }
+    function changeMonth(d) { 
+      state.currentDate = new Date(state.currentDate || new Date());
+      state.currentDate.setMonth(state.currentDate.getMonth() + d); 
+      renderCalendar(); 
+    }
 
     function addKanbanTask() {
       let title = document.getElementById('kanban-title').value;
