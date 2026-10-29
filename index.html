@@ -25,7 +25,6 @@
       color: var(--text-color); user-select: none;
     }
 
-    /* Modal de Login Firebase */
     .login-overlay {
       position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(16px);
       z-index: 99999; display: flex; align-items: center; justify-content: center;
@@ -36,7 +35,6 @@
     .login-card h2 { font-size: 1.3rem; margin-bottom: 6px; color: var(--text-color); }
     .login-card p { font-size: 0.82rem; color: #64748b; margin-bottom: 20px; }
 
-    /* Área de Trabalho */
     .desktop {
       position: absolute; inset: 0 0 var(--taskbar-height) 0; padding: 20px;
       display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr));
@@ -54,7 +52,6 @@
     .icon svg { width: 36px; height: 36px; margin-bottom: 6px; }
     .icon span { font-size: 0.75rem; font-weight: 600; text-align: center; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); word-break: break-word; }
 
-    /* Barra de Tarefas */
     .taskbar-container {
       position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
       height: var(--taskbar-height); background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(20px);
@@ -87,7 +84,6 @@
     .user-profile { display: flex; align-items: center; gap: 8px; color: white; font-size: 0.8rem; font-weight: 600; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; }
     .taskbar-clock { color: #ffffff; font-size: 0.85rem; font-weight: 600; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.2); }
 
-    /* Menu Iniciar */
     .start-menu {
       position: absolute; bottom: calc(var(--taskbar-height) + 20px); left: 50%; transform: translateX(-50%);
       width: 400px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);
@@ -100,7 +96,6 @@
     }
     .start-item:hover { background: var(--primary); color: white; }
 
-    /* Janelas */
     .window {
       position: absolute; width: 560px; background: var(--panel-bg); backdrop-filter: blur(20px);
       border-radius: 16px; border: 1px solid var(--panel-border); box-shadow: var(--shadow);
@@ -242,15 +237,14 @@
     <div class="taskbar-clock" id="taskbar-clock">18:00</div>
   </div>
 
-  <!-- Script Firebase Realtime Database -->
+  <!-- Script Firebase com a Chave Corrigida -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // As tuas chaves exatas retiradas do teu print do Firebase Console
     const firebaseConfig = {
-      apiKey: "AIzaSyAuWkVy6Ex73LR-WN9EbopxzWpR77oUc",
+      apiKey: "AIzaSyAuWkVLy6Ex73LR-WN9EbopxfzWpR77oUc",
       authDomain: "clouddesktop-c0b72.firebaseapp.com",
       databaseURL: "https://clouddesktop-c0b72-default-rtdb.firebaseio.com",
       projectId: "clouddesktop-c0b72",
@@ -279,7 +273,6 @@
       }, 1000);
     };
 
-    // Autenticação
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById('login-modal').style.display = 'none';
@@ -302,7 +295,6 @@
     };
     window.logoutFirebase = () => signOut(auth);
 
-    // Salvamento no Realtime Database
     window.saveState = async () => {
       const user = auth.currentUser;
       if (user) {
@@ -347,7 +339,6 @@
       document.onmouseup = () => document.removeEventListener('mousemove', onMove);
     };
 
-    // Gestão de Nomes "Sem Nome" e Assistente
     function generateUniqueName(base, list) {
       if (!list.includes(base)) return base;
       let i = 1;
