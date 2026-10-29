@@ -13,7 +13,7 @@
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Configuração oficial extraída da sua imagem do Firebase
+    // Configuração oficial do seu projeto Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDw-m4Jet6uQVzUlSftLdPiNANDtaVDKZI",
       authDomain: "clouddesktop-5a99f.firebaseapp.com",
@@ -29,7 +29,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Expor funções globais para o HTML usar
     window.fbAuth = auth;
     window.fbDb = db;
     window.fbSignIn = signInWithEmailAndPassword;
@@ -39,7 +38,7 @@
     window.fbSetDoc = setDoc;
     window.fbGetDoc = getDoc;
 
-    // Monitorar Estado de Autenticação
+    // Monitorar Autenticação
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById('login-modal').style.display = 'none';
@@ -582,7 +581,7 @@
       let title = document.getElementById('note-title').value || 'Sem Nome';
       let body = document.getElementById('note-body').value;
       let folder = document.getElementById('note-folder-select').value;
-      let idx = state.notes.findIndex(n => n.id === id);
+      let idx = state.notes.notes ? -1 : state.notes.findIndex(n => n.id === id);
       if (idx >= 0) state.notes[idx] = { id, title, body, folder };
       else state.notes.push({ id, title, body, folder });
       saveState();
