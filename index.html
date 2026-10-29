@@ -126,11 +126,11 @@
 </head>
 <body>
 
-  <!-- Tela de Login -->
+  <!-- Tela de Login (Apenas E-mail e Senha) -->
   <div class="login-overlay" id="login-modal">
     <div class="login-card">
       <h2>☁️ CloudDesktop Login</h2>
-      <p>Faça login para sincronizar os seus dados na nuvem.</p>
+      <p>Entre com seu e-mail e senha para salvar seus dados.</p>
       
       <div class="form-group"><label>E-mail</label><input type="email" id="auth-email" placeholder="seu@email.com"></div>
       <div class="form-group"><label>Senha</label><input type="password" id="auth-pass" placeholder="••••••••"></div>
@@ -139,8 +139,6 @@
         <button class="btn" onclick="loginWithEmail()" style="flex:1;">Entrar</button>
         <button class="btn btn-secondary" onclick="registerWithEmail()" style="flex:1;">Criar Conta</button>
       </div>
-      <div style="margin: 12px 0; font-size: 0.75rem; color: #94a3b8;">— OU —</div>
-      <button class="btn" onclick="loginWithGoogle()" style="width:100%; background:#db4437;">Entrar com Google</button>
     </div>
   </div>
 
@@ -237,10 +235,10 @@
     <div class="taskbar-clock" id="taskbar-clock">18:00</div>
   </div>
 
-  <!-- Script Firebase com a Chave Exata do Painel -->
+  <!-- Script Firebase (Sem dependência do Google Auth) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -276,7 +274,7 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById('login-modal').style.display = 'none';
-        document.getElementById('user-display-email').innerText = user.email || user.displayName;
+        document.getElementById('user-display-email').innerText = user.email;
         await loadStateFromFirebase(user.uid);
       } else {
         document.getElementById('login-modal').style.display = 'flex';
@@ -285,14 +283,18 @@
     });
 
     window.loginWithEmail = async () => {
-      try { await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value); } catch (e) { alert(e.message); }
+      try {
+        await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
+      } catch (e) { alert("Erro ao entrar: " + e.message); }
     };
+
     window.registerWithEmail = async () => {
-      try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value); alert("Conta criada com sucesso!"); } catch (e) { alert(e.message); }
+      try {
+        await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pass').value);
+        alert("Conta criada com sucesso!");
+      } catch (e) { alert("Erro ao criar conta: " + e.message); }
     };
-    window.loginWithGoogle = async () => {
-      try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { alert(e.message); }
-    };
+
     window.logoutFirebase = () => signOut(auth);
 
     window.saveState = async () => {
