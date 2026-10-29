@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu OS Virtual - Firebase Cloud</title>
+  <title>Meu OS Virtual - Database Auth</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDKs (Auth + Realtime Database) -->
+  <!-- Firebase Realtime Database SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -25,28 +24,23 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    window.fbAuth = auth;
     window.fbDb = db;
-    window.fbSignIn = signInWithEmailAndPassword;
-    window.fbSignUp = createUserWithEmailAndPassword;
-    window.fbSignOut = signOut;
     window.fbRef = ref;
     window.fbSet = set;
     window.fbGet = get;
     window.fbChild = child;
 
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
+    // Verificar se já existe um usuário logado na sessão do navegador
+    window.onload = async () => {
+      const loggedUserKey = localStorage.getItem('clouddesktop_db_user');
+      if (loggedUserKey) {
         document.getElementById('login-modal').style.display = 'none';
-        await carregarDadosDaNuvem(user.uid);
+        await carregarDadosDoUsuario(loggedUserKey);
         window.renderAll();
-      } else {
-        document.getElementById('login-modal').style.display = 'flex';
       }
-    });
+    };
   </script>
 
   <style>
@@ -313,11 +307,11 @@
 </head>
 <body>
 
-  <!-- Tela de Login / Cadastro Firebase -->
+  <!-- Tela de Login / Cadastro via Database -->
   <div class="login-overlay" id="login-modal">
     <div class="login-card">
-      <h2>☁️ CloudDesktop</h2>
-      <p>Conectado ao Firebase Realtime Database</p>
+      <h2>☁️ CloudDesktop Database</h2>
+      <p>Gerenciado pelo Realtime Database</p>
       
       <div class="auth-tabs">
         <button class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Entrar</button>
@@ -328,7 +322,7 @@
       <div class="form-group" style="text-align:left;"><label>Senha</label><input type="password" id="auth-pass" placeholder="••••••••"></div>
 
       <div style="margin-top:14px;">
-        <button class="btn" id="auth-action-btn" onclick="executarAutenticacaoFirebase()" style="width:100%;">Entrar no Sistema</button>
+        <button class="btn" id="auth-action-btn" onclick="executarAutenticacaoDatabase()" style="width:100%;">Entrar no Sistema</button>
       </div>
     </div>
   </div>
@@ -391,7 +385,7 @@
   <div class="window hidden" id="win-tutorial" style="top:40px; left:100px; width:520px;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-tutorial')"><span class="window-title">🎓 Guia Rápido</span><button class="win-btn-close" onclick="closeWindow('win-tutorial')">✕</button></div>
     <div class="window-body">
-      <div class="demo-screen"><h3 style="color:#fff;">Salvo no Realtime Database</h3><p style="color:#cbd5e1; font-size:0.85rem;">Seus dados são sincronizados online no Realtime Database.</p></div>
+      <div class="demo-screen"><h3 style="color:#fff;">Banco de Dados Integrado</h3><p style="color:#cbd5e1; font-size:0.85rem;">Cadastros e dados salvos no Realtime Database.</p></div>
       <button class="btn btn-danger" style="width:100%;" onclick="closeWindow('win-tutorial')">Fechar</button>
     </div>
   </div>
@@ -455,7 +449,7 @@
 
   <div class="window hidden" id="win-settings" style="top:80px; left:160px; width:360px;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-settings')"><span class="window-title">⚙️ Ajustes</span><button class="win-btn-close" onclick="closeWindow('win-settings')">✕</button></div>
-    <div class="window-body"><button class="btn btn-danger" onclick="fazerLogoutFirebase()" style="width:100%;">Sair da Conta</button></div>
+    <div class="window-body"><button class="btn btn-danger" onclick="fazerLogoutDatabase()" style="width:100%;">Sair da Conta</button></div>
   </div>
 
   <div class="taskbar-container">
@@ -471,6 +465,7 @@
     };
     let currentExplorerFolder = 'root';
     let authMode = 'login';
+    let currentUserId = '';
 
     function switchAuthMode(mode) {
       authMode = mode;
@@ -479,48 +474,82 @@
       document.getElementById('auth-action-btn').innerText = mode === 'login' ? 'Entrar no Sistema' : 'Cadastrar Conta';
     }
 
-    async function executarAutenticacaoFirebase() {
+    // Gerenciamento de Login e Cadastro direto no Realtime Database
+    async function executarAutenticacaoDatabase() {
       const email = document.getElementById('auth-email').value.trim();
       const pass = document.getElementById('auth-pass').value.trim();
       if (!email || !pass) return alert("Preencha e-mail e senha.");
 
+      const safeKey = email.replace(/[.#$\/\[\]]/g, "_"); // Limpa o e-mail para virar uma chave válida no Firebase
+      const dbRef = window.fbRef(window.fbDb);
+
       try {
+        const snapshot = await window.fbGet(window.fbChild(dbRef, 'registros_usuarios/' + safeKey));
+
         if (authMode === 'register') {
-          await window.fbSignUp(window.fbAuth, email, pass);
-          alert("Conta criada com sucesso no Firebase!");
+          if (snapshot.exists()) {
+            alert("Este e-mail já está cadastrado! Faça login.");
+            return;
+          }
+          // Cria o usuário e dados iniciais no Database
+          const novoUsuario = { senha: pass, dadosOS: state };
+          await window.fbSet(window.fbRef(window.fbDb, 'registros_usuarios/' + safeKey), novoUsuario);
+          
+          localStorage.setItem('clouddesktop_db_user', safeKey);
+          currentUserId = safeKey;
+          document.getElementById('login-modal').style.display = 'none';
+          alert("Conta criada com sucesso!");
+          window.renderAll();
         } else {
-          await window.fbSignIn(window.fbAuth, email, pass);
+          // Modo Login: Verifica se o e-mail existe e a senha bate
+          if (!snapshot.exists()) {
+            alert("E-mail não encontrado! Crie uma conta primeiro.");
+            return;
+          }
+          const userData = snapshot.val();
+          if (userData.senha !== pass) {
+            alert("Senha incorreta! As informações não batem.");
+            return;
+          }
+
+          // Login aprovado
+          localStorage.setItem('clouddesktop_db_user', safeKey);
+          currentUserId = safeKey;
+          if (userData.dadosOS) state = { ...state, ...userData.dadosOS };
+          document.getElementById('login-modal').style.display = 'none';
+          window.renderAll();
         }
       } catch (error) {
-        alert("Erro de Autenticação: " + error.message);
+        alert("Erro ao processar: " + error.message);
       }
     }
 
-    async function fazerLogoutFirebase() {
-      await window.fbSignOut(window.fbAuth);
+    async function carregarDadosDoUsuario(safeKey) {
+      currentUserId = safeKey;
+      try {
+        const dbRef = window.fbRef(window.fbDb);
+        const snapshot = await window.fbGet(window.fbChild(dbRef, 'registros_usuarios/' + safeKey));
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          if (userData.dadosOS) state = { ...state, ...userData.dadosOS };
+        }
+      } catch (e) {
+        console.error("Erro ao carregar dados:", e);
+      }
+    }
+
+    function fazerLogoutDatabase() {
+      localStorage.removeItem('clouddesktop_db_user');
       location.reload();
     }
 
     async function salvarDadosNaNuvem() {
-      const user = window.fbAuth.currentUser;
-      if (!user) return;
+      if (!currentUserId) return;
       try {
-        const dbRef = window.fbRef(window.fbDb, 'usuarios/' + user.uid.replace('.', '_'));
+        const dbRef = window.fbRef(window.fbDb, 'registros_usuarios/' + currentUserId + '/dadosOS');
         await window.fbSet(dbRef, state);
       } catch (e) {
-        console.error("Erro ao salvar no Realtime Database:", e);
-      }
-    }
-
-    async function carregarDadosDaNuvem(uid) {
-      try {
-        const dbRef = window.fbRef(window.fbDb);
-        const snapshot = await window.fbGet(window.fbChild(dbRef, 'usuarios/' + uid.replace('.', '_')));
-        if (snapshot.exists()) {
-          state = { ...state, ...snapshot.val() };
-        }
-      } catch (e) {
-        console.error("Erro ao carregar do Realtime Database:", e);
+        console.error("Erro ao salvar no Database:", e);
       }
     }
 
@@ -555,6 +584,7 @@
     function createNewFolder() {
       let name = prompt("Nome da pasta:");
       if (!name) return;
+      if (!Array.isArray(state.folders)) state.folders = [];
       state.folders.push(name.trim());
       saveState();
       window.renderAll();
@@ -564,6 +594,8 @@
     function renderExplorer(f) {
       const grid = document.getElementById('explorer-grid');
       grid.innerHTML = '';
+      if (!Array.isArray(state.folders)) state.folders = [];
+      if (!Array.isArray(state.notes)) state.notes = [];
       if (f === 'root') state.folders.forEach(folder => grid.innerHTML += `<div class="file-card" onclick="openExplorer('${folder}')">📂<span>${folder}</span></div>`);
       state.notes.filter(n => n.folder === f).forEach(n => grid.innerHTML += `<div class="file-card">📝<span>${n.title}</span></div>`);
     }
