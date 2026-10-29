@@ -7,16 +7,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (Auth + Realtime Database) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Configuração oficial do seu projeto Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDw-m4Jet6uQVzUlSftLdPiNANDtaVDKZI",
       authDomain: "clouddesktop-5a99f.firebaseapp.com",
+      databaseURL: "https://clouddesktop-5a99f-default-rtdb.firebaseio.com",
       projectId: "clouddesktop-5a99f",
       storageBucket: "clouddesktop-5a99f.firebasestorage.app",
       messagingSenderId: "856894141802",
@@ -24,21 +24,20 @@
       measurementId: "G-0X4MKMEV48"
     };
 
-    // Inicializar Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db = getDatabase(app);
 
     window.fbAuth = auth;
     window.fbDb = db;
     window.fbSignIn = signInWithEmailAndPassword;
     window.fbSignUp = createUserWithEmailAndPassword;
     window.fbSignOut = signOut;
-    window.fbDoc = doc;
-    window.fbSetDoc = setDoc;
-    window.fbGetDoc = getDoc;
+    window.fbRef = ref;
+    window.fbSet = set;
+    window.fbGet = get;
+    window.fbChild = child;
 
-    // Monitorar Autenticação
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         document.getElementById('login-modal').style.display = 'none';
@@ -318,7 +317,7 @@
   <div class="login-overlay" id="login-modal">
     <div class="login-card">
       <h2>☁️ CloudDesktop</h2>
-      <p>Conectado ao Firebase Cloud</p>
+      <p>Conectado ao Firebase Realtime Database</p>
       
       <div class="auth-tabs">
         <button class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Entrar</button>
@@ -392,7 +391,7 @@
   <div class="window hidden" id="win-tutorial" style="top:40px; left:100px; width:520px;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-tutorial')"><span class="window-title">🎓 Guia Rápido</span><button class="win-btn-close" onclick="closeWindow('win-tutorial')">✕</button></div>
     <div class="window-body">
-      <div class="demo-screen"><h3 style="color:#fff;">Salvo na Nuvem Firebase</h3><p style="color:#cbd5e1; font-size:0.85rem;">Seus dados são sincronizados no banco de dados online do Firebase.</p></div>
+      <div class="demo-screen"><h3 style="color:#fff;">Salvo no Realtime Database</h3><p style="color:#cbd5e1; font-size:0.85rem;">Seus dados são sincronizados online no Realtime Database.</p></div>
       <button class="btn btn-danger" style="width:100%;" onclick="closeWindow('win-tutorial')">Fechar</button>
     </div>
   </div>
@@ -506,22 +505,22 @@
       const user = window.fbAuth.currentUser;
       if (!user) return;
       try {
-        const docRef = window.fbDoc(window.fbDb, "usuarios", user.uid);
-        await window.fbSetDoc(docRef, state);
+        const dbRef = window.fbRef(window.fbDb, 'usuarios/' + user.uid.replace('.', '_'));
+        await window.fbSet(dbRef, state);
       } catch (e) {
-        console.error("Erro ao salvar no Firestore:", e);
+        console.error("Erro ao salvar no Realtime Database:", e);
       }
     }
 
     async function carregarDadosDaNuvem(uid) {
       try {
-        const docRef = window.fbDoc(window.fbDb, "usuarios", uid);
-        const docSnap = await window.fbGetDoc(docRef);
-        if (docSnap.exists()) {
-          state = { ...state, ...docSnap.data() };
+        const dbRef = window.fbRef(window.fbDb);
+        const snapshot = await window.fbGet(window.fbChild(dbRef, 'usuarios/' + uid.replace('.', '_')));
+        if (snapshot.exists()) {
+          state = { ...state, ...snapshot.val() };
         }
       } catch (e) {
-        console.error("Erro ao carregar do Firestore:", e);
+        console.error("Erro ao carregar do Realtime Database:", e);
       }
     }
 
@@ -581,7 +580,8 @@
       let title = document.getElementById('note-title').value || 'Sem Nome';
       let body = document.getElementById('note-body').value;
       let folder = document.getElementById('note-folder-select').value;
-      let idx = state.notes.notes ? -1 : state.notes.findIndex(n => n.id === id);
+      if (!Array.isArray(state.notes)) state.notes = [];
+      let idx = state.notes.findIndex(n => n.id === id);
       if (idx >= 0) state.notes[idx] = { id, title, body, folder };
       else state.notes.push({ id, title, body, folder });
       saveState();
@@ -600,10 +600,12 @@
     function addKanbanTask() {
       let title = document.getElementById('kanban-title').value;
       if(!title) return;
+      if (!Array.isArray(state.kanban)) state.kanban = [];
       state.kanban.push({ id: 'k-'+Date.now(), title, priority: 'media', status: 'todo' });
       saveState(); renderKanban();
     }
     function renderKanban() {
+      if (!Array.isArray(state.kanban)) state.kanban = [];
       document.getElementById('kanban-todo').innerHTML = state.kanban.filter(k=>k.status==='todo').map(k=>`<div class="kanban-card">${k.title}</div>`).join('');
     }
 
@@ -611,10 +613,12 @@
       let desc = document.getElementById('fin-desc').value;
       let val = parseFloat(document.getElementById('fin-val').value);
       if(isNaN(val)) return;
+      if (!Array.isArray(state.finance)) state.finance = [];
       state.finance.push({ id: 'f-'+Date.now(), desc, val });
       saveState(); renderFinance();
     }
     function renderFinance() {
+      if (!Array.isArray(state.finance)) state.finance = [];
       document.getElementById('fin-list').innerHTML = state.finance.map(f=>`<div>${f.desc}: R$ ${f.val}</div>`).join('');
     }
 
@@ -622,18 +626,27 @@
       let file = e.target.files[0];
       if(!file) return;
       let reader = new FileReader();
-      reader.onload = ev => { state.mediaFiles.push({ id:'m-'+Date.now(), name:file.name, src:ev.target.result, folder:'root' }); saveState(); renderMediaGallery(); };
+      reader.onload = ev => {
+        if (!Array.isArray(state.mediaFiles)) state.mediaFiles = [];
+        state.mediaFiles.push({ id:'m-'+Date.now(), name:file.name, src:ev.target.result, folder:'root' });
+        saveState(); renderMediaGallery();
+      };
       reader.readAsDataURL(file);
     }
     function renderMediaGallery() {
+      if (!Array.isArray(state.mediaFiles)) state.mediaFiles = [];
       document.getElementById('media-grid').innerHTML = state.mediaFiles.map(m=>`<div class="file-card">🖼️<span>${m.name}</span></div>`).join('');
     }
 
-    function renderTrash() { document.getElementById('trash-list').innerHTML = state.trash.length ? 'Itens na lixeira' : 'Vazia'; }
+    function renderTrash() {
+      if (!Array.isArray(state.trash)) state.trash = [];
+      document.getElementById('trash-list').innerHTML = state.trash.length ? 'Itens na lixeira' : 'Vazia';
+    }
     function emptyTrash() { state.trash = []; saveState(); renderTrash(); }
     function updateFolderSelects() {
       let s = document.getElementById('note-folder-select');
       s.innerHTML = '<option value="root">Área de Trabalho</option>';
+      if (!Array.isArray(state.folders)) state.folders = [];
       state.folders.forEach(f => s.innerHTML += `<option value="${f}">${f}</option>`);
     }
     function handleGlobalSearch(q) {}
