@@ -3,9 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu OS Virtual - Profissional & Completo</title>
+  <title>Meu OS Virtual - Profissional & Firebase</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- SDKs do Firebase (Modular v10) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    window.firebaseModules = { initializeApp, getDatabase, ref, set, get, child };
+  </script>
+
   <style>
     :root {
       --primary: #6366f1;
@@ -29,6 +37,30 @@
       color: var(--text-color);
       user-select: none;
     }
+
+    /* Tela de Login / Configuração Inicial do Firebase */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+    }
+    .login-card {
+      background: #ffffff;
+      padding: 32px;
+      border-radius: 20px;
+      width: 420px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .login-card h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; text-align: center; }
+    .login-card p { font-size: 0.82rem; color: #64748b; text-align: center; line-height: 1.4; }
 
     /* Área de Trabalho */
     .desktop {
@@ -109,12 +141,7 @@
     }
     .start-btn:hover { opacity: 0.9; }
 
-    /* Barra de Pesquisa Global na Taskbar */
-    .taskbar-search-box {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
+    .taskbar-search-box { position: relative; display: flex; align-items: center; }
     .taskbar-search-input {
       background: rgba(255, 255, 255, 0.12);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -132,15 +159,8 @@
       background: rgba(255, 255, 255, 0.22);
       border-color: var(--primary);
     }
-    .taskbar-search-icon {
-      position: absolute;
-      left: 8px;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.6);
-      pointer-events: none;
-    }
+    .taskbar-search-icon { position: absolute; left: 8px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.6); pointer-events: none; }
 
-    /* Pop-up de Resultados de Pesquisa Global */
     .global-search-results {
       position: absolute;
       bottom: calc(var(--taskbar-height) + 15px);
@@ -174,16 +194,9 @@
       font-weight: 600;
     }
     .search-res-item:hover { background: var(--primary); color: white; }
-    .search-res-item:hover .search-res-path { color: rgba(255, 255, 255, 0.8); }
     .search-res-path { font-size: 0.68rem; color: #64748b; font-weight: normal; }
 
-    .taskbar-clock {
-      color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding-left: 8px;
-      border-left: 1px solid rgba(255,255,255,0.2);
-    }
+    .taskbar-clock { color: #ffffff; font-size: 0.85rem; font-weight: 600; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.2); }
 
     /* Menu Iniciar */
     .start-menu {
@@ -301,14 +314,12 @@
     .explorer-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: #f1f5f9; padding: 8px; border-radius: 10px; border: 1px solid #e2e8f0; }
     .address-bar { flex: 1; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.8rem; font-weight: 600; color: #475569; }
 
-    /* Cards de Arquivos */
     .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; margin-top: 10px; }
     .file-card { position: relative; display: flex; flex-direction: column; align-items: center; padding: 10px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; cursor: pointer; }
     .file-card span { font-size: 0.72rem; text-align: center; font-weight: 600; margin-top: 4px; word-break: break-all; }
     .file-delete-btn { position: absolute; top: 4px; right: 4px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: bold; cursor: pointer; display: none; }
     .file-card:hover .file-delete-btn { display: flex; align-items: center; justify-content: center; }
 
-    /* Formulários e Botões */
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
     .form-group input, .form-group select, .form-group textarea {
@@ -324,6 +335,18 @@
   </style>
 </head>
 <body oncontextmenu="openContextMenu(event)">
+
+  <!-- Tela de Login / Conexão com Firebase -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h2>🔐 Acesso ao OS Virtual</h2>
+      <p>Insira suas credenciais do Firebase para carregar seu ambiente salvo na nuvem.</p>
+      <div class="form-group"><label>Firebase API Key</label><input type="text" id="fb-apikey" placeholder="Ex: AIzaSy..."></div>
+      <div class="form-group"><label>Database URL</label><input type="text" id="fb-dburl" placeholder="Ex: https://meu-app-default-rtdb.firebaseio.com"></div>
+      <div class="form-group"><label>Nome de Usuário / Chave de Acesso</label><input type="text" id="fb-user" placeholder="Ex: fernando_neto"></div>
+      <button class="btn" onclick="fazerLoginFirebase()" style="width:100%; margin-top:8px;">Entrar no Sistema</button>
+    </div>
+  </div>
 
   <!-- Área de Trabalho -->
   <div class="desktop" id="desktop">
@@ -342,6 +365,10 @@
     <div class="icon" onclick="openWindow('win-calendar')">
       <svg fill="none" stroke="#ef4444" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
       <span>Mk Agenda</span>
+    </div>
+    <div class="icon" onclick="openWindow('win-corrector')">
+      <svg fill="none" stroke="#6366f1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+      <span>Revisor PT</span>
     </div>
     <div class="icon" onclick="openWindow('win-finance')">
       <svg fill="none" stroke="#10b981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -369,7 +396,6 @@
     </div>
   </div>
 
-  <!-- Container de Widgets -->
   <div id="widgets-container"></div>
 
   <!-- Menu Iniciar -->
@@ -380,6 +406,7 @@
       <div class="start-item" onclick="openWindow('win-trash'); toggleStartMenu();">🗑️ Lixeira</div>
       <div class="start-item" onclick="openWindow('win-media'); toggleStartMenu();">🖼️ Mídias</div>
       <div class="start-item" onclick="openWindow('win-calendar'); toggleStartMenu();">📅 Mk Agenda</div>
+      <div class="start-item" onclick="openWindow('win-corrector'); toggleStartMenu();">✍️ Revisor PT</div>
       <div class="start-item" onclick="openWindow('win-finance'); toggleStartMenu();">💰 Finanças Pro</div>
       <div class="start-item" onclick="openWindow('win-kanban'); toggleStartMenu();">📊 Kanban Pro</div>
       <div class="start-item" onclick="openWindow('win-qrcode'); toggleStartMenu();">🔲 Gerador QR</div>
@@ -389,7 +416,6 @@
     </div>
   </div>
 
-  <!-- Resultado da Pesquisa Global na Taskbar -->
   <div class="global-search-results" id="global-search-results"></div>
 
   <!-- Janela: Lixeira -->
@@ -407,10 +433,10 @@
     </div>
   </div>
 
-  <!-- Janela: Explorador Profissional -->
+  <!-- Janela: Explorador -->
   <div class="window hidden" id="win-explorer" style="top:50px; left:100px; width:620px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-explorer')">
-      <span class="window-title">📂 Explorador de Arquivos Profissional</span>
+      <span class="window-title">📂 Explorador de Arquivos</span>
       <button class="win-btn-close" onclick="closeWindow('win-explorer')">✕</button>
     </div>
     <div class="window-body-padded">
@@ -423,22 +449,27 @@
     </div>
   </div>
 
-  <!-- Janela: Assistente de Organização -->
-  <div class="window hidden" id="win-organizer" style="top:70px; left:130px; width:480px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-organizer')">
-      <span class="window-title">🧹 Assistente de Organização</span>
-      <button class="win-btn-close" onclick="closeWindow('win-organizer')">✕</button>
+  <!-- Janela: Revisor / Assistente Automático de Português (Novo) -->
+  <div class="window hidden" id="win-corrector" style="top:50px; left:90px; width:650px; height:auto;">
+    <div class="window-header" onmousedown="dragWindow(event, 'win-corrector')">
+      <span class="window-title">✍️ Assistente Inteligente de Português</span>
+      <button class="win-btn-close" onclick="closeWindow('win-corrector')">✕</button>
     </div>
     <div class="window-body-padded">
-      <p style="font-size:0.82rem; color:#64748b; margin-bottom:12px;">Identificamos itens gravados como "Sem Nome". Renomeie-os abaixo para manter seu sistema organizado:</p>
-      <div id="organizer-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;">Cole seu texto abaixo. O assistente corrige erros gramaticais, ajusta iniciais maiúsculas em nomes próprios e formata o estilo:</p>
+      <textarea id="corrector-input" rows="5" placeholder="Digite ou cole seu texto aqui..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.85rem; margin-bottom:8px;"></textarea>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button class="btn" onclick="corrigirTextoAutomatico()">✨ Corrigir & Capitalizar</button>
+        <button class="btn btn-secondary" onclick="copiarTextoCorrigido()">📋 Copiar</button>
+      </div>
+      <textarea id="corrector-output" rows="5" placeholder="Texto revisado aparecerá aqui..." readonly style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; font-size:0.85rem;"></textarea>
     </div>
   </div>
 
-  <!-- Janela: Kanban Profissional -->
+  <!-- Janela: Kanban -->
   <div class="window hidden" id="win-kanban" style="top:50px; left:80px; width:720px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-kanban')">
-      <span class="window-title">📊 Kanban de Projetos Profissional</span>
+      <span class="window-title">📊 Kanban de Projetos</span>
       <button class="win-btn-close" onclick="closeWindow('win-kanban')">✕</button>
     </div>
     <div class="window-body-padded">
@@ -460,10 +491,10 @@
     </div>
   </div>
 
-  <!-- Janela: Finanças Profissional -->
+  <!-- Janela: Finanças -->
   <div class="window hidden" id="win-finance" style="top:60px; left:110px; width:540px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-finance')">
-      <span class="window-title">💰 Gestão Financeira Profissional</span>
+      <span class="window-title">💰 Gestão Financeira</span>
       <button class="win-btn-close" onclick="closeWindow('win-finance')">✕</button>
     </div>
     <div class="window-body-padded">
@@ -491,7 +522,7 @@
     </div>
   </div>
 
-  <!-- Janela: Gerador de QR Code -->
+  <!-- Janela: Gerador QR -->
   <div class="window hidden" id="win-qrcode" style="top:70px; left:140px; width:400px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-qrcode')">
       <span class="window-title">🔲 Gerador de QR Code</span>
@@ -506,7 +537,7 @@
     </div>
   </div>
 
-  <!-- Janela: Mk Agenda (Com iFrame integrando o site externo) -->
+  <!-- Janela: Mk Agenda (Com iFrame externo) -->
   <div class="window hidden" id="win-calendar" style="top:50px; left:120px; width:750px; height:550px;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-calendar')">
       <span class="window-title">📅 Mk Agenda</span>
@@ -533,7 +564,7 @@
     </div>
   </div>
 
-  <!-- Janela: Mídias -->
+  <!-- Janela: Mídias (Upload salvo no Firebase) -->
   <div class="window hidden" id="win-media" style="top:60px; left:120px; width:520px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-media')">
       <span class="window-title">🖼️ Fotos e Vídeos</span>
@@ -567,7 +598,7 @@
       <div class="form-group"><select id="note-folder-select"><option value="root">Área de Trabalho (Raiz)</option></select></div>
       <div class="form-group"><input type="text" id="note-title" placeholder="Título do Documento..."></div>
       <div class="form-group"><textarea id="note-body" rows="5" placeholder="Escreva aqui..."></textarea></div>
-      <button class="btn" onclick="saveNote()" style="width:100%;">Salvar Nota</button>
+      <button class="btn" onclick="saveNote()" style="width:100%;">Salvar Nota no Firebase</button>
     </div>
   </div>
 
@@ -589,10 +620,8 @@
   <div class="context-menu" id="context-menu">
     <button onclick="openNoteEditor()">📝 Criar Nota</button>
     <button onclick="createNewFolder()">📁 Criar Pasta</button>
-    <button onclick="addWidgetToDesktop('appointments')">📅 Widget Seus Compromissos</button>
     <button onclick="addWidgetToDesktop('tasks')">📌 Widget Tarefas</button>
     <button onclick="addWidgetToDesktop('clock')">⏰ Widget Relógio</button>
-    <button onclick="addWidgetToDesktop('weather')">🌤️ Widget Clima Real</button>
     <button onclick="addWidgetToDesktop('finance')">📈 Widget Finanças</button>
     <button onclick="addWidgetToDesktop('postit')">📝 Widget Post-it</button>
   </div>
@@ -600,30 +629,28 @@
   <!-- Barra de Tarefas -->
   <div class="taskbar-container">
     <button class="start-btn" onclick="toggleStartMenu(event)">🚀 Iniciar</button>
-    
     <div class="taskbar-search-box">
       <span class="taskbar-search-icon">🔍</span>
       <input type="text" class="taskbar-search-input" id="global-search-input" placeholder="Pesquisar em tudo..." oninput="handleGlobalSearch(this.value)" onclick="event.stopPropagation()">
     </div>
-
     <div class="taskbar-clock" id="taskbar-clock">14:38</div>
   </div>
 
   <script>
+    let db = null;
+    let userRefPath = '';
+
     let state = {
       wallpaper: '',
       folders: [],
       notes: [],
       tasks: [],
-      events: [],
       finance: [],
       kanban: [],
       mediaFiles: [],
       trash: [],
       widgets: [],
-      postItText: '',
-      currentDate: new Date(),
-      selectedDateStr: new Date().toISOString().split('T')[0]
+      postItText: ''
     };
 
     let currentExplorerFolder = 'root';
@@ -631,11 +658,65 @@
     let pomoSeconds = 1500;
 
     window.onload = () => {
-      loadState();
       updateClock();
       setInterval(updateClock, 1000);
-      renderAll();
+      
+      const savedConfig = localStorage.getItem('virtual_os_firebase_config');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        document.getElementById('fb-apikey').value = config.apiKey;
+        document.getElementById('fb-dburl').value = config.databaseURL;
+        document.getElementById('fb-user').value = config.userKey;
+        initFirebaseAndLoad(config.apiKey, config.databaseURL, config.userKey);
+      }
     };
+
+    function fazerLoginFirebase() {
+      const apiKey = document.getElementById('fb-apikey').value.trim();
+      const databaseURL = document.getElementById('fb-dburl').value.trim();
+      const userKey = document.getElementById('fb-user').value.trim();
+
+      if (!apiKey || !databaseURL || !userKey) {
+        alert("Preencha todos os campos do Firebase!");
+        return;
+      }
+
+      localStorage.setItem('virtual_os_firebase_config', JSON.stringify({ apiKey, databaseURL, userKey }));
+      initFirebaseAndLoad(apiKey, databaseURL, userKey);
+    }
+
+    async function initFirebaseAndLoad(apiKey, databaseURL, userKey) {
+      try {
+        const { initializeApp } = window.firebaseModules;
+        const { getDatabase, ref, get } = window.firebaseModules;
+
+        const app = initializeApp({ apiKey, databaseURL }, 'VirtualOSApp');
+        db = getDatabase(app);
+        userRefPath = `users/${userKey.replace(/[.#$[\]]/g, "_")}`;
+
+        const snapshot = await get(ref(db, userRefPath));
+        if (snapshot.exists()) {
+          state = { ...state, ...snapshot.val() };
+          if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
+        }
+
+        document.getElementById('login-screen').style.display = 'none';
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao conectar ao Firebase. Verifique suas credenciais.");
+      }
+    }
+
+    async function saveState() {
+      if (!db || !userRefPath) return;
+      try {
+        const { ref, set } = window.firebaseModules;
+        await set(ref(db, userRefPath), state);
+      } catch (err) {
+        console.error("Erro ao salvar no Firebase:", err);
+      }
+    }
 
     function updateClock() {
       const now = new Date();
@@ -689,153 +770,49 @@
       document.getElementById('global-search-results').style.display = 'none';
     });
 
-    function generateUniqueName(baseName, existingList) {
-      if (!existingList.includes(baseName)) return baseName;
-      let counter = 1;
-      while (existingList.includes(`${baseName} ${counter}`)) {
-        counter++;
-      }
-      return `${baseName} ${counter}`;
-    }
+    // Assistente de Correção de Português
+    function corrigirTextoAutomatico() {
+      let texto = document.getElementById('corrector-input').value;
+      if (!texto) return;
 
-    function checkAndPromptOrganization() {
-      const unnamedNotes = state.notes.filter(n => n.title.startsWith('Sem Nome'));
-      const unnamedFolders = state.folders.filter(f => f.startsWith('Sem Nome'));
+      // Correção de espaçamento e pontuação básica
+      texto = texto.replace(/\s+/g, ' ');
+      texto = texto.replace(/\s*([,.;?!])\s*/g, '$1 ');
+
+      // Capitalizar primeira letra após ponto, interrogação ou exclamação
+      texto = texto.replace(/([.?!]\s+)([a-zà-ú])/g, (match, p1, p2) => p1 + p2.toUpperCase());
+
+      // Capitalizar primeira letra do texto
+      if (texto.length > 0) {
+        texto = texto.charAt(0).toUpperCase() + texto.slice(1);
+      }
+
+      // Nomes próprios e dias da semana comuns em português
+      const nomesProprios = ['brasil', 'portugal', 'sao paulo', 'rio de janeiro', 'joao', 'maria', 'fernando', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado', 'domingo', 'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
       
-      if (unnamedNotes.length > 0 || unnamedFolders.length > 0) {
-        setTimeout(() => {
-          if (confirm("Identificamos arquivos ou pastas sem nome. Quer fazer uma organização agora?")) {
-            openOrganizerWindow();
-          }
-        }, 300);
-      }
-    }
-
-    function openOrganizerWindow() {
-      const list = document.getElementById('organizer-list');
-      list.innerHTML = '';
-
-      state.folders.filter(f => f.startsWith('Sem Nome')).forEach(f => {
-        list.innerHTML += `
-          <div style="display:flex; gap:8px; align-items:center;">
-            <span style="font-size:0.8rem; font-weight:700;">📂 ${f}:</span>
-            <input type="text" placeholder="Novo nome..." id="rename-f-${f}" style="flex:1; padding:6px; font-size:0.8rem;">
-            <button class="btn" onclick="saveRenameFolder('${f}')">Salvar</button>
-          </div>
-        `;
+      nomesProprios.forEach(nome => {
+        const regex = new RegExp(`\\b${nome}\\b`, 'gi');
+        texto = texto.replace(regex, (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
       });
 
-      state.notes.filter(n => n.title.startsWith('Sem Nome')).forEach(n => {
-        list.innerHTML += `
-          <div style="display:flex; gap:8px; align-items:center;">
-            <span style="font-size:0.8rem; font-weight:700;">📝 ${n.title}:</span>
-            <input type="text" placeholder="Novo nome..." id="rename-n-${n.id}" style="flex:1; padding:6px; font-size:0.8rem;">
-            <button class="btn" onclick="saveRenameNote('${n.id}')">Salvar</button>
-          </div>
-        `;
-      });
-
-      openWindow('win-organizer');
+      document.getElementById('corrector-output').value = texto.trim();
     }
 
-    function saveRenameFolder(oldName) {
-      const newName = document.getElementById(`rename-f-${oldName}`).value.trim();
-      if (!newName) return;
-      const idx = state.folders.indexOf(oldName);
-      if (idx >= 0) {
-        state.folders[idx] = newName;
-        state.notes.forEach(n => { if (n.folder === oldName) n.folder = newName; });
-        saveState();
-        renderAll();
-        openOrganizerWindow();
-      }
-    }
-
-    function saveRenameNote(id) {
-      const newName = document.getElementById(`rename-n-${id}`).value.trim();
-      if (!newName) return;
-      const note = state.notes.find(n => n.id === id);
-      if (note) {
-        note.title = newName;
-        saveState();
-        renderAll();
-        openOrganizerWindow();
-      }
-    }
-
-    function handleGlobalSearch(query) {
-      const resultsContainer = document.getElementById('global-search-results');
-      const cleanQuery = query.trim().toLowerCase();
-
-      if (!cleanQuery) {
-        resultsContainer.style.display = 'none';
-        return;
-      }
-
-      let html = '';
-      let matchCount = 0;
-
-      const matchedNotes = state.notes.filter(n => n.title.toLowerCase().includes(cleanQuery) || n.body.toLowerCase().includes(cleanQuery));
-      if (matchedNotes.length > 0) {
-        html += `<div class="search-res-group">📝 Documentos e Notas (${matchedNotes.length})</div>`;
-        matchedNotes.forEach(n => {
-          matchCount++;
-          html += `
-            <div class="search-res-item" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')">
-              <span>📝 ${n.title}</span>
-              <span class="search-res-path">📁 ${n.folder === 'root' ? 'Área de Trabalho' : n.folder}</span>
-            </div>
-          `;
-        });
-      }
-
-      const matchedMedia = state.mediaFiles.filter(m => m.name.toLowerCase().includes(cleanQuery));
-      if (matchedMedia.length > 0) {
-        html += `<div class="search-res-group">🖼️ Mídias (${matchedMedia.length})</div>`;
-        matchedMedia.forEach(m => {
-          matchCount++;
-          html += `
-            <div class="search-res-item" onclick="openMediaFile('${m.id}')">
-              <span>${m.type === 'image' ? '🖼️' : '🎬'} ${m.name}</span>
-              <span class="search-res-path">📁 ${m.folder === 'root' ? 'Área de Trabalho' : m.folder}</span>
-            </div>
-          `;
-        });
-      }
-
-      const matchedFolders = state.folders.filter(f => f.toLowerCase().includes(cleanQuery));
-      if (matchedFolders.length > 0) {
-        html += `<div class="search-res-group">📂 Pastas (${matchedFolders.length})</div>`;
-        matchedFolders.forEach(f => {
-          matchCount++;
-          html += `
-            <div class="search-res-item" onclick="openExplorer('${f}')">
-              <span>📂 ${f}</span>
-              <span class="search-res-path">Diretório</span>
-            </div>
-          `;
-        });
-      }
-
-      if (matchCount === 0) {
-        html = '<div style="font-size:0.8rem; color:#64748b; text-align:center; padding:10px;">Nenhum item encontrado.</div>';
-      }
-
-      resultsContainer.innerHTML = html;
-      resultsContainer.style.display = 'flex';
+    function copiarTextoCorrigido() {
+      const output = document.getElementById('corrector-output');
+      output.select();
+      navigator.clipboard.writeText(output.value);
+      alert("Texto copiado para a área de transferência!");
     }
 
     function createNewFolder() {
       let name = prompt("Nome da Nova Pasta:");
-      if (name === null) return;
+      if (!name) return;
       name = name.trim();
-      if (!name) {
-        name = generateUniqueName("Sem Nome", state.folders);
-      }
+      if (!state.folders) state.folders = [];
       state.folders.push(name);
       saveState();
       renderAll();
-      checkAndPromptOrganization();
     }
 
     function openExplorer(folderName = 'root') {
@@ -849,7 +826,7 @@
       const grid = document.getElementById('explorer-grid');
       grid.innerHTML = '';
 
-      if (folderName === 'root') {
+      if (folderName === 'root' && state.folders) {
         state.folders.forEach(f => {
           grid.innerHTML += `
             <div class="file-card" onclick="openExplorer('${f}')">
@@ -859,25 +836,31 @@
         });
       }
 
-      state.notes.filter(n => n.folder === folderName).forEach(n => {
-        grid.innerHTML += `
-          <div class="file-card" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')">
-            <button class="file-delete-btn" onclick="moveToTrash(event, 'note', '${n.id}')">✕</button>
-            📝<span>${n.title}</span>
-          </div>`;
-      });
+      if (state.notes) {
+        state.notes.filter(n => n.folder === folderName).forEach(n => {
+          grid.innerHTML += `
+            <div class="file-card" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')">
+              <button class="file-delete-btn" onclick="moveToTrash(event, 'note', '${n.id}')">✕</button>
+              📝<span>${n.title}</span>
+            </div>`;
+        });
+      }
 
-      state.mediaFiles.filter(m => m.folder === folderName).forEach(m => {
-        grid.innerHTML += `
-          <div class="file-card" onclick="openMediaFile('${m.id}')">
-            <button class="file-delete-btn" onclick="moveToTrash(event, 'media', '${m.id}')">✕</button>
-            ${m.type === 'image' ? '🖼️' : '🎬'}<span>${m.name}</span>
-          </div>`;
-      });
+      if (state.mediaFiles) {
+        state.mediaFiles.filter(m => m.folder === folderName).forEach(m => {
+          grid.innerHTML += `
+            <div class="file-card" onclick="openMediaFile('${m.id}')">
+              <button class="file-delete-btn" onclick="moveToTrash(event, 'media', '${m.id}')">✕</button>
+              ${m.type === 'image' ? '🖼️' : '🎬'}<span>${m.name}</span>
+            </div>`;
+        });
+      }
     }
 
     function moveToTrash(e, itemType, itemId) {
       e.stopPropagation();
+      if (!state.trash) state.trash = [];
+
       if (itemType === 'folder') {
         state.folders = state.folders.filter(f => f !== itemId);
         state.trash.push({ id: 't-' + Date.now(), type: 'folder', name: itemId, data: itemId });
@@ -901,7 +884,7 @@
     function renderTrash() {
       const list = document.getElementById('trash-list');
       if (!list) return;
-      if (state.trash.length === 0) {
+      if (!state.trash || state.trash.length === 0) {
         list.innerHTML = '<span style="font-size:0.8rem; color:#64748b;">A Lixeira está vazia.</span>';
         return;
       }
@@ -918,9 +901,9 @@
       if (idx < 0) return;
       const item = state.trash[idx];
 
-      if (item.type === 'folder') state.folders.push(item.data);
-      else if (item.type === 'note') state.notes.push(item.data);
-      else if (item.type === 'media') state.mediaFiles.push(item.data);
+      if (item.type === 'folder') { if(!state.folders) state.folders=[]; state.folders.push(item.data); }
+      else if (item.type === 'note') { if(!state.notes) state.notes=[]; state.notes.push(item.data); }
+      else if (item.type === 'media') { if(!state.mediaFiles) state.mediaFiles=[]; state.mediaFiles.push(item.data); }
 
       state.trash.splice(idx, 1);
       saveState();
@@ -935,11 +918,72 @@
       }
     }
 
+    // Upload de Mídias (Fotos/Vídeos) salvo no Firebase
+    function handleMediaUpload(e) {
+      const file = e.target.files[0];
+      const folder = document.getElementById('media-folder-select').value;
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (!state.mediaFiles) state.mediaFiles = [];
+        state.mediaFiles.push({ id: 'm-' + Date.now(), name: file.name, type: file.type.startsWith('video/') ? 'video' : 'image', folder, src: ev.target.result });
+        saveState();
+        renderAll();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderMediaGallery() {
+      const grid = document.getElementById('media-grid');
+      if (!grid) return;
+      if (!state.mediaFiles) state.mediaFiles = [];
+      grid.innerHTML = state.mediaFiles.map(m => `
+        <div class="file-card" onclick="openMediaFile('${m.id}')">
+          <button class="file-delete-btn" onclick="moveToTrash(event, 'media', '${m.id}')">✕</button>
+          ${m.type === 'image' ? '🖼️' : '🎬'}<span>${m.name}</span>
+        </div>
+      `).join('');
+    }
+
+    function openMediaFile(id) {
+      const m = state.mediaFiles.find(item => item.id === id);
+      if (!m) return;
+      if (m.type === 'image') { document.getElementById('photo-viewer-img').src = m.src; openWindow('win-photo-viewer'); }
+      else { document.getElementById('video-viewer-player').src = m.src; openWindow('win-video-viewer'); }
+    }
+
+    function openNoteEditor(id = '', title = '', folder = 'root', body = '') {
+      document.getElementById('note-id').value = id || 'n-' + Date.now();
+      document.getElementById('note-title').value = title;
+      document.getElementById('note-folder-select').value = folder;
+      document.getElementById('note-body').value = body ? decodeURIComponent(body) : '';
+      openWindow('win-notes');
+    }
+
+    function saveNote() {
+      const id = document.getElementById('note-id').value;
+      let title = document.getElementById('note-title').value.trim();
+      const body = document.getElementById('note-body').value;
+      const folder = document.getElementById('note-folder-select').value;
+
+      if (!title) title = 'Nota sem título';
+      if (!state.notes) state.notes = [];
+
+      const idx = state.notes.findIndex(n => n.id === id);
+      if (idx >= 0) state.notes[idx] = { id, title, body, folder };
+      else state.notes.push({ id, title, body, folder });
+
+      saveState();
+      closeWindow('win-notes');
+      renderAll();
+    }
+
     function addKanbanTask() {
       let title = document.getElementById('kanban-title').value.trim();
       const priority = document.getElementById('kanban-priority').value;
       const date = document.getElementById('kanban-date').value;
       if (!title) title = 'Tarefa sem título';
+      if (!state.kanban) state.kanban = [];
       state.kanban.push({ id: 'k-' + Date.now(), title, priority, date, status: 'todo' });
       saveState();
       document.getElementById('kanban-title').value = '';
@@ -961,6 +1005,7 @@
       todo.innerHTML = ''; doing.innerHTML = ''; done.innerHTML = '';
 
       let cTodo = 0, cDoing = 0, cDone = 0;
+      if (!state.kanban) state.kanban = [];
 
       state.kanban.forEach(item => {
         let tagClass = item.priority === 'alta' ? 'tag-alta' : item.priority === 'media' ? 'tag-media' : 'tag-baixa';
@@ -999,27 +1044,28 @@
       const val = parseFloat(document.getElementById('fin-val').value);
       const type = document.getElementById('fin-type').value;
       if (isNaN(val)) return;
-      if (!desc) desc = 'Lançamento sem descrição';
+      if (!desc) desc = 'Lançamento';
       const finalVal = type === 'in' ? Math.abs(val) : -Math.abs(val);
+      if (!state.finance) state.finance = [];
       state.finance.push({ id: 'f-' + Date.now(), desc, val: finalVal });
       saveState();
       document.getElementById('fin-desc').value = '';
       document.getElementById('fin-val').value = '';
       renderFinance();
-      renderWidgets();
     }
 
     function removeTransaction(id) {
       state.finance = state.finance.filter(f => f.id !== id);
       saveState();
       renderFinance();
-      renderWidgets();
     }
 
     function renderFinance() {
       const list = document.getElementById('fin-list');
       if (!list) return;
       let totalIn = 0, totalOut = 0;
+      if (!state.finance) state.finance = [];
+
       list.innerHTML = state.finance.map(f => {
         if (f.val >= 0) totalIn += f.val; else totalOut += Math.abs(f.val);
         return `
@@ -1039,35 +1085,6 @@
       document.getElementById('fin-total').innerText = `R$ ${net.toFixed(2)}`;
     }
 
-    function openNoteEditor(id = '', title = '', folder = 'root', body = '') {
-      document.getElementById('note-id').value = id || 'n-' + Date.now();
-      document.getElementById('note-title').value = title;
-      document.getElementById('note-folder-select').value = folder;
-      document.getElementById('note-body').value = body ? decodeURIComponent(body) : '';
-      openWindow('win-notes');
-    }
-
-    function saveNote() {
-      const id = document.getElementById('note-id').value;
-      let title = document.getElementById('note-title').value.trim();
-      const body = document.getElementById('note-body').value;
-      const folder = document.getElementById('note-folder-select').value;
-
-      if (!title) {
-        const existingTitles = state.notes.map(n => n.title);
-        title = generateUniqueName("Sem Nome", existingTitles);
-      }
-
-      const idx = state.notes.findIndex(n => n.id === id);
-      if (idx >= 0) state.notes[idx] = { id, title, body, folder };
-      else state.notes.push({ id, title, body, folder });
-
-      saveState();
-      closeWindow('win-notes');
-      renderAll();
-      checkAndPromptOrganization();
-    }
-
     function generateQRCode() {
       const text = document.getElementById('qr-input').value.trim();
       const img = document.getElementById('qr-img');
@@ -1076,24 +1093,6 @@
       img.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(text)}`;
       img.style.display = 'inline-block';
       placeholder.style.display = 'none';
-    }
-
-    async function fetchRealWeather(cityName, elementId) {
-      const el = document.getElementById(elementId);
-      if (!el) return;
-      try {
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=1`);
-        const geoData = await geoRes.json();
-        if (!geoData.results || geoData.results.length === 0) { el.innerText = 'Cidade não encontrada'; return; }
-        const { latitude, longitude, name } = geoData.results[0];
-
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-        const weatherData = await weatherRes.json();
-        const temp = weatherData.current_weather.temperature;
-        el.innerText = `📍 ${name}: ${temp}°C`;
-      } catch (err) {
-        el.innerText = 'Erro ao buscar clima';
-      }
     }
 
     function startPomodoro() {
@@ -1109,39 +1108,9 @@
     function pausePomodoro() { clearInterval(pomodoroInterval); pomodoroInterval = null; }
     function resetPomodoro() { pausePomodoro(); pomoSeconds = 1500; document.getElementById('pomo-timer').innerText = '25:00'; }
 
-    function handleMediaUpload(e) {
-      const file = e.target.files[0];
-      const folder = document.getElementById('media-folder-select').value;
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        state.mediaFiles.push({ id: 'm-' + Date.now(), name: file.name, type: file.type.startsWith('video/') ? 'video' : 'image', folder, src: ev.target.result });
-        saveState();
-        renderAll();
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function renderMediaGallery() {
-      const grid = document.getElementById('media-grid');
-      if (!grid) return;
-      grid.innerHTML = state.mediaFiles.map(m => `
-        <div class="file-card" onclick="openMediaFile('${m.id}')">
-          <button class="file-delete-btn" onclick="moveToTrash(event, 'media', '${m.id}')">✕</button>
-          ${m.type === 'image' ? '🖼️' : '🎬'}<span>${m.name}</span>
-        </div>
-      `).join('');
-    }
-
-    function openMediaFile(id) {
-      const m = state.mediaFiles.find(item => item.id === id);
-      if (!m) return;
-      if (m.type === 'image') { document.getElementById('photo-viewer-img').src = m.src; openWindow('win-photo-viewer'); }
-      else { document.getElementById('video-viewer-player').src = m.src; openWindow('win-video-viewer'); }
-    }
-
     function addWidgetToDesktop(type) {
-      state.widgets.push({ id: 'w-' + Date.now(), type, x: 100, y: 100, locked: false, city: 'São Paulo' });
+      if (!state.widgets) state.widgets = [];
+      state.widgets.push({ id: 'w-' + Date.now(), type, x: 100, y: 100, locked: false });
       saveState();
       renderWidgets();
     }
@@ -1160,6 +1129,8 @@
     function renderWidgets() {
       const container = document.getElementById('widgets-container');
       container.innerHTML = '';
+      if (!state.widgets) state.widgets = [];
+
       state.widgets.forEach(w => {
         const div = document.createElement('div');
         div.className = `draggable-widget ${w.locked ? 'locked' : ''}`;
@@ -1167,7 +1138,7 @@
         div.style.top = w.y + 'px';
 
         div.onmousedown = (e) => {
-          if (w.locked || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+          if (w.locked || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
           let shiftX = e.clientX - div.getBoundingClientRect().left;
           let shiftY = e.clientY - div.getBoundingClientRect().top;
           function onMove(ev) {
@@ -1181,37 +1152,19 @@
         };
 
         const lockIcon = w.locked ? '🔒' : '🔓';
-
-        if (w.type === 'appointments') {
-          div.innerHTML = `
-            <div class="widget-header"><span class="widget-title">📅 Seus Compromissos</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <div style="max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:6px;">
-              <span style="font-size:0.75rem; color:#64748b;">Verifique sua agenda no app Mk Agenda.</span>
-            </div>
-          `;
-        } else if (w.type === 'tasks') {
+        if (w.type === 'tasks') {
           div.innerHTML = `
             <div class="widget-header"><span class="widget-title">📌 Tarefas</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <input type="text" placeholder="Nova..." onkeypress="if(event.key==='Enter'){state.tasks.push(this.value); saveState(); renderWidgets();}" style="width:100%; padding:4px; font-size:0.8rem;">
-            <div style="font-size:0.78rem; margin-top:6px;">${state.tasks.map((t, idx)=>`<div style="display:flex; justify-content:space-between; align-items:center;"><span>• ${t}</span><button class="btn-delete-item" onclick="state.tasks.splice(${idx},1); saveState(); renderWidgets();">✕</button></div>`).join('')}</div>
+            <input type="text" placeholder="Nova..." onkeypress="if(event.key==='Enter'){if(!state.tasks)state.tasks=[]; state.tasks.push(this.value); saveState(); renderWidgets();}" style="width:100%; padding:4px; font-size:0.8rem;">
+            <div style="font-size:0.78rem; margin-top:6px;">${(state.tasks||[]).map((t, idx)=>`<div style="display:flex; justify-content:space-between; align-items:center;"><span>• ${t}</span><button class="btn-delete-item" onclick="state.tasks.splice(${idx},1); saveState(); renderWidgets();">✕</button></div>`).join('')}</div>
           `;
         } else if (w.type === 'clock') {
           div.innerHTML = `
             <div class="widget-header"><span class="widget-title">⏰ Relógio</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
             <h2 style="text-align:center; color:var(--primary); font-weight:800;">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</h2>
           `;
-        } else if (w.type === 'weather') {
-          div.innerHTML = `
-            <div class="widget-header"><span class="widget-title">🌤️ Clima Real</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
-            <div style="display:flex; gap:4px; margin-bottom:6px;">
-              <input type="text" id="w-city-${w.id}" value="${w.city || 'São Paulo'}" placeholder="Cidade..." style="padding:4px; font-size:0.75rem; flex:1;">
-              <button class="btn" style="padding:2px 8px; font-size:0.7rem;" onclick="updateWidgetCity('${w.id}')">Ok</button>
-            </div>
-            <p id="weather-val-${w.id}" style="text-align:center; font-weight:700; font-size:0.85rem;">Carregando...</p>
-          `;
-          setTimeout(() => fetchRealWeather(w.city || 'São Paulo', `weather-val-${w.id}`), 50);
         } else if (w.type === 'finance') {
-          let total = state.finance.reduce((acc, f) => acc + f.val, 0);
+          let total = (state.finance||[]).reduce((acc, f) => acc + f.val, 0);
           div.innerHTML = `
             <div class="widget-header"><span class="widget-title">📈 Saldo Total</span><div><button class="widget-btn" onclick="toggleLockWidget('${w.id}')">${lockIcon}</button><button class="widget-btn" onclick="removeWidget('${w.id}')">✕</button></div></div>
             <h3 style="text-align:center; color:${total >= 0 ? '#10b981' : '#ef4444'};">R$ ${total.toFixed(2)}</h3>
@@ -1226,19 +1179,10 @@
       });
     }
 
-    function updateWidgetCity(id) {
-      const cityInput = document.getElementById(`w-city-${id}`).value;
-      const w = state.widgets.find(item => item.id === id);
-      if (w && cityInput) {
-        w.city = cityInput;
-        saveState();
-        fetchRealWeather(cityInput, `weather-val-${id}`);
-      }
-    }
-
     function renderFolders() {
       const container = document.getElementById('desktop');
       document.querySelectorAll('.desktop .dynamic-folder').forEach(e => e.remove());
+      if (!state.folders) state.folders = [];
       state.folders.forEach(f => {
         const div = document.createElement('div');
         div.className = 'icon dynamic-folder';
@@ -1253,6 +1197,7 @@
       const selMedia = document.getElementById('media-folder-select');
       selNote.innerHTML = '<option value="root">Área de Trabalho (Raiz)</option>';
       selMedia.innerHTML = '<option value="root">Área de Trabalho (Raiz)</option>';
+      if (!state.folders) state.folders = [];
       state.folders.forEach(f => {
         selNote.innerHTML += `<option value="${f}">${f}</option>`;
         selMedia.innerHTML += `<option value="${f}">${f}</option>`;
@@ -1271,19 +1216,34 @@
       reader.readAsDataURL(file);
     }
 
-    function fazerLogout() {
-      if (confirm("Deseja realmente sair da conta?")) {
-        localStorage.removeItem('virtual_os_pro_ultimate_state');
-        location.reload();
+    function handleGlobalSearch(query) {
+      const resultsContainer = document.getElementById('global-search-results');
+      const cleanQuery = query.trim().toLowerCase();
+      if (!cleanQuery) { resultsContainer.style.display = 'none'; return; }
+
+      let html = '';
+      let matchCount = 0;
+
+      if (state.notes) {
+        const matchedNotes = state.notes.filter(n => n.title.toLowerCase().includes(cleanQuery) || n.body.toLowerCase().includes(cleanQuery));
+        if (matchedNotes.length > 0) {
+          html += `<div class="search-res-group">📝 Notas (${matchedNotes.length})</div>`;
+          matchedNotes.forEach(n => {
+            matchCount++;
+            html += `<div class="search-res-item" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')"><span>📝 ${n.title}</span><span class="search-res-path">${n.folder}</span></div>`;
+          });
+        }
       }
+
+      if (matchCount === 0) html = '<div style="font-size:0.8rem; color:#64748b; text-align:center; padding:10px;">Nenhum item encontrado.</div>';
+      resultsContainer.innerHTML = html;
+      resultsContainer.style.display = 'flex';
     }
 
-    function saveState() { localStorage.setItem('virtual_os_pro_ultimate_state', JSON.stringify(state)); }
-    function loadState() {
-      const saved = localStorage.getItem('virtual_os_pro_ultimate_state');
-      if (saved) {
-        state = { ...state, ...JSON.parse(saved) };
-        if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
+    function fazerLogout() {
+      if (confirm("Deseja desconectar do Firebase e sair?")) {
+        localStorage.removeItem('virtual_os_firebase_config');
+        location.reload();
       }
     }
   </script>
