@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu OS Virtual - Profissional & Firebase</title>
+  <title>Meu OS Virtual - Dados no Database</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- SDKs do Firebase (Modular v10) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     
-    window.firebaseModules = { initializeApp, getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, getDatabase, ref, set, get };
+    window.firebaseModules = { initializeApp, getDatabase, ref, set, get, child };
   </script>
 
   <style>
@@ -40,7 +39,7 @@
       user-select: none;
     }
 
-    /* Tela de Login Tradicional com E-mail e Senha */
+    /* Tela de Login baseada no Database */
     #login-screen {
       position: fixed;
       inset: 0;
@@ -348,16 +347,15 @@
 </head>
 <body oncontextmenu="openContextMenu(event)">
 
-  <!-- Tela de Login com E-mail e Senha (Firebase Auth) -->
+  <!-- Tela de Login com Credenciais salvas no Database -->
   <div id="login-screen">
     <div class="login-card">
       <h2>🔐 Acesso ao OS Virtual</h2>
-      <p>Entre com seu e-mail e senha para carregar seu ambiente na nuvem.</p>
-      <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
-      <div class="form-group"><label>Senha</label><input type="password" id="login-password" placeholder="Sua senha"></div>
+      <p>Digite seu usuário e senha para carregar ou criar sua conta direto no Database.</p>
+      <div class="form-group"><label>Nome de Usuário (ou E-mail)</label><input type="text" id="login-user" placeholder="ex: meu_usuario"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="login-pass" placeholder="Sua senha"></div>
       <div style="display:flex; gap:8px; margin-top:4px;">
-        <button class="btn" onclick="fazerLogin()" style="flex:1;">Entrar</button>
-        <button class="btn btn-secondary" onclick="fazerCadastro()" style="flex:1;">Criar Conta</button>
+        <button class="btn" onclick="fazerLoginDB()" style="flex:1;">Entrar / Criar Conta</button>
       </div>
     </div>
   </div>
@@ -593,7 +591,7 @@
       <div class="form-group"><select id="note-folder-select"><option value="root">Área de Trabalho (Raiz)</option></select></div>
       <div class="form-group"><input type="text" id="note-title" placeholder="Título do Documento..."></div>
       <div class="form-group"><textarea id="note-body" rows="5" placeholder="Escreva aqui..."></textarea></div>
-      <button class="btn" onclick="saveNote()" style="width:100%;">Salvar Nota no Firebase</button>
+      <button class="btn" onclick="saveNote()" style="width:100%;">Salvar Nota no Database</button>
     </div>
   </div>
 
@@ -628,9 +626,8 @@
   </div>
 
   <script>
-    let auth = null;
     let db = null;
-    let currentUser = null;
+    let currentUsername = '';
     let userRefPath = '';
 
     let state = {
@@ -654,16 +651,23 @@
     window.onload = () => {
       updateClock();
       setInterval(updateClock, 1000);
-      initFirebaseConnection();
+      initFirebaseDB();
+      
+      // Checar se já estava logado nesta sessão
+      const savedUser = sessionStorage.getItem('os_virtual_user');
+      if (savedUser) {
+        currentUsername = savedUser;
+        userRefPath = `users_db/${currentUsername}`;
+        document.getElementById('login-screen').style.display = 'none';
+        carregarDadosDoDatabase();
+      }
     };
 
-    function initFirebaseConnection() {
+    function initFirebaseDB() {
       try {
         const { initializeApp } = window.firebaseModules;
-        const { getAuth, onAuthStateChanged } = window.firebaseModules;
         const { getDatabase } = window.firebaseModules;
 
-        // Configuração automática padrão do Firebase (ou insira sua config caso utilize um projeto próprio)
         const firebaseConfig = {
           apiKey: "AIzaSyDummyKeyForVirtualOS-App",
           authDomain: "virtual-os-default.firebaseapp.com",
@@ -672,63 +676,92 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
         db = getDatabase(app);
+      } catch (err) {
+        console.error("Erro ao iniciar Firebase Database:", err);
+      }
+    }
 
-        onAuthStateChanged(auth, async (user) => {
-          if (user) {
-            currentUser = user;
-            userRefPath = `users/${user.uid}`;
+    async function fazerLoginDB() {
+      const usernameInput = document.getElementById('login-user').value.trim().toLowerCase();
+      const passInput = document.getElementById('login-pass').value.trim();
+
+      if (!usernameInput || !passInput) {
+        alert("Preencha o nome de usuário e a senha!");
+        return;
+      }
+
+      if (!db) {
+        alert("Erro de conexão com o banco de dados.");
+        return;
+      }
+
+      try {
+        const { ref, get, set } = window.firebaseModules;
+        const userRef = ref(db, `users_db/${usernameInput}`);
+        const snapshot = await get(userRef);
+
+        if (snapshot.exists()) {
+          // Conta existe, verificar senha
+          const userData = snapshot.val();
+          if (userData.password === passInput) {
+            currentUsername = usernameInput;
+            userRefPath = `users_db/${currentUsername}`;
+            sessionStorage.setItem('os_virtual_user', currentUsername);
+            state = { ...state, ...userData.state };
+            if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
             document.getElementById('login-screen').style.display = 'none';
-            await loadStateFromFirebase();
             renderAll();
           } else {
-            document.getElementById('login-screen').style.display = 'flex';
+            alert("Senha incorreta!");
           }
-        });
+        } else {
+          // Conta não existe, criar automaticamente nova conta e salvar no Database
+          currentUsername = usernameInput;
+          userRefPath = `users_db/${currentUsername}`;
+          sessionStorage.setItem('os_virtual_user', currentUsername);
+          
+          const defaultState = {
+            wallpaper: '',
+            folders: ['Documentos', 'Projetos'],
+            notes: [{ id: 'n-1', title: 'Boas-vindas', folder: 'root', body: 'Bem-vindo ao seu OS Virtual salvo no Database!' }],
+            tasks: ['Conhecer o sistema'],
+            finance: [],
+            kanban: [],
+            mediaFiles: [],
+            trash: [],
+            widgets: [],
+            postItText: 'Lembrete rápido!'
+          };
+
+          state = defaultState;
+          await set(ref(db, userRefPath), {
+            password: passInput,
+            state: state
+          });
+
+          document.getElementById('login-screen').style.display = 'none';
+          renderAll();
+          alert("Nova conta criada e salva com sucesso no Database!");
+        }
       } catch (err) {
-        console.error("Erro ao iniciar Firebase:", err);
+        console.error("Erro no login/cadastro:", err);
+        alert("Erro ao conectar com o banco de dados.");
       }
     }
 
-    async function fazerLogin() {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      if (!email || !password) { alert("Preencha e-mail e senha!"); return; }
-
-      try {
-        const { signInWithEmailAndPassword } = window.firebaseModules;
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (err) {
-        alert("Erro no login: " + err.message);
-      }
-    }
-
-    async function fazerCadastro() {
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      if (!email || !password) { alert("Preencha e-mail e senha para criar a conta!"); return; }
-
-      try {
-        const { createUserWithEmailAndPassword } = window.firebaseModules;
-        await createUserWithEmailAndPassword(auth, email, password);
-        alert("Conta criada com sucesso!");
-      } catch (err) {
-        alert("Erro no cadastro: " + err.message);
-      }
-    }
-
-    async function loadStateFromFirebase() {
+    async function carregarDadosDoDatabase() {
       if (!db || !userRefPath) return;
       try {
         const { ref, get } = window.firebaseModules;
-        const snapshot = await get(ref(db, userRefPath));
+        const snapshot = await get(ref(db, `${userRefPath}/state`));
         if (snapshot.exists()) {
           state = { ...state, ...snapshot.val() };
           if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
+          renderAll();
         }
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        console.error("Erro ao carregar dados do usuário:", err);
       }
     }
 
@@ -736,9 +769,16 @@
       if (!db || !userRefPath) return;
       try {
         const { ref, set } = window.firebaseModules;
-        await set(ref(db, userRefPath), state);
+        // Salva estado e senha atual
+        const passSnapshot = await get(ref(db, `${userRefPath}/password`));
+        const currentPass = passSnapshot.val() || '123456';
+
+        await set(ref(db, userRefPath), {
+          password: currentPass,
+          state: state
+        });
       } catch (err) {
-        console.error("Erro ao salvar no Firebase:", err);
+        console.error("Erro ao salvar dados no Database:", err);
       }
     }
 
@@ -1235,10 +1275,9 @@
       resultsContainer.style.display = 'flex';
     }
 
-    async function fazerLogout() {
+    function fazerLogout() {
       if (confirm("Deseja sair da conta?")) {
-        const { signOut } = window.firebaseModules;
-        await signOut(auth);
+        sessionStorage.removeItem('os_virtual_user');
         location.reload();
       }
     }
