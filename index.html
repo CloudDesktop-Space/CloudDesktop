@@ -10,8 +10,10 @@
   <!-- SDKs do Firebase (Modular v10) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    window.firebaseModules = { initializeApp, getDatabase, ref, set, get, child };
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    
+    window.firebaseModules = { initializeApp, getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, getDatabase, ref, set, get };
   </script>
 
   <style>
@@ -38,7 +40,7 @@
       user-select: none;
     }
 
-    /* Tela de Login / Configuração Inicial do Firebase */
+    /* Tela de Login Tradicional com E-mail e Senha */
     #login-screen {
       position: fixed;
       inset: 0;
@@ -53,13 +55,13 @@
       background: #ffffff;
       padding: 32px;
       border-radius: 20px;
-      width: 420px;
+      width: 400px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
-    .login-card h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; text-align: center; }
+    .login-card h2 { font-size: 1.35rem; font-weight: 800; color: #0f172a; text-align: center; }
     .login-card p { font-size: 0.82rem; color: #64748b; text-align: center; line-height: 1.4; }
 
     /* Área de Trabalho */
@@ -281,6 +283,16 @@
     .window-body { padding: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     .window-body-padded { padding: 16px; overflow-y: auto; max-height: 520px; }
 
+    /* Calculadora */
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+    .calc-btn {
+      padding: 16px; font-size: 1.2rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; color: #0f172a; cursor: pointer; transition: background 0.15s;
+    }
+    .calc-btn:hover { background: #e2e8f0; }
+    .calc-btn-op { background: #6366f1; color: white; border-color: #4f46e5; }
+    .calc-btn-clear { background: #ef4444; color: white; border-color: #dc2626; }
+    .calc-btn-eq { background: #10b981; color: white; border-color: #059669; }
+
     /* Widgets Arrastáveis */
     .draggable-widget {
       position: absolute;
@@ -299,7 +311,7 @@
     .widget-title { font-size: 0.85rem; font-weight: 800; }
     .widget-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: #64748b; }
 
-    /* Kanban Profissional */
+    /* Kanban */
     .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .kanban-col { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; min-height: 280px; }
     .kanban-col h4 { font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; color: #334155; text-transform: uppercase; display: flex; justify-content: space-between; }
@@ -310,7 +322,7 @@
     .tag-baixa { background: #e0f2fe; color: #0284c7; }
     .btn-delete-item { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
 
-    /* Explorador Profissional */
+    /* Explorador */
     .explorer-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: #f1f5f9; padding: 8px; border-radius: 10px; border: 1px solid #e2e8f0; }
     .address-bar { flex: 1; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.8rem; font-weight: 600; color: #475569; }
 
@@ -336,15 +348,17 @@
 </head>
 <body oncontextmenu="openContextMenu(event)">
 
-  <!-- Tela de Login / Conexão com Firebase -->
+  <!-- Tela de Login com E-mail e Senha (Firebase Auth) -->
   <div id="login-screen">
     <div class="login-card">
       <h2>🔐 Acesso ao OS Virtual</h2>
-      <p>Insira suas credenciais do Firebase para carregar seu ambiente salvo na nuvem.</p>
-      <div class="form-group"><label>Firebase API Key</label><input type="text" id="fb-apikey" placeholder="Ex: AIzaSy..."></div>
-      <div class="form-group"><label>Database URL</label><input type="text" id="fb-dburl" placeholder="Ex: https://meu-app-default-rtdb.firebaseio.com"></div>
-      <div class="form-group"><label>Nome de Usuário / Chave de Acesso</label><input type="text" id="fb-user" placeholder="Ex: fernando_neto"></div>
-      <button class="btn" onclick="fazerLoginFirebase()" style="width:100%; margin-top:8px;">Entrar no Sistema</button>
+      <p>Entre com seu e-mail e senha para carregar seu ambiente na nuvem.</p>
+      <div class="form-group"><label>E-mail</label><input type="email" id="login-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="login-password" placeholder="Sua senha"></div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn" onclick="fazerLogin()" style="flex:1;">Entrar</button>
+        <button class="btn btn-secondary" onclick="fazerCadastro()" style="flex:1;">Criar Conta</button>
+      </div>
     </div>
   </div>
 
@@ -365,6 +379,10 @@
     <div class="icon" onclick="openWindow('win-calendar')">
       <svg fill="none" stroke="#ef4444" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
       <span>Mk Agenda</span>
+    </div>
+    <div class="icon" onclick="openWindow('win-calculator')">
+      <svg fill="none" stroke="#10b981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+      <span>Calculadora</span>
     </div>
     <div class="icon" onclick="openWindow('win-corrector')">
       <svg fill="none" stroke="#6366f1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -406,6 +424,7 @@
       <div class="start-item" onclick="openWindow('win-trash'); toggleStartMenu();">🗑️ Lixeira</div>
       <div class="start-item" onclick="openWindow('win-media'); toggleStartMenu();">🖼️ Mídias</div>
       <div class="start-item" onclick="openWindow('win-calendar'); toggleStartMenu();">📅 Mk Agenda</div>
+      <div class="start-item" onclick="openWindow('win-calculator'); toggleStartMenu();">🧮 Calculadora</div>
       <div class="start-item" onclick="openWindow('win-corrector'); toggleStartMenu();">✍️ Revisor PT</div>
       <div class="start-item" onclick="openWindow('win-finance'); toggleStartMenu();">💰 Finanças Pro</div>
       <div class="start-item" onclick="openWindow('win-kanban'); toggleStartMenu();">📊 Kanban Pro</div>
@@ -418,12 +437,9 @@
 
   <div class="global-search-results" id="global-search-results"></div>
 
-  <!-- Janela: Lixeira -->
+  <!-- Janelas do Sistema -->
   <div class="window hidden" id="win-trash" style="top:60px; left:120px; width:540px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-trash')">
-      <span class="window-title">🗑️ Lixeira do Sistema</span>
-      <button class="win-btn-close" onclick="closeWindow('win-trash')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-trash')"><span class="window-title">🗑️ Lixeira</span><button class="win-btn-close" onclick="closeWindow('win-trash')">✕</button></div>
     <div class="window-body-padded">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <span style="font-size:0.8rem; font-weight:700; color:#64748b;">Itens Removidos</span>
@@ -433,12 +449,8 @@
     </div>
   </div>
 
-  <!-- Janela: Explorador -->
   <div class="window hidden" id="win-explorer" style="top:50px; left:100px; width:620px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-explorer')">
-      <span class="window-title">📂 Explorador de Arquivos</span>
-      <button class="win-btn-close" onclick="closeWindow('win-explorer')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-explorer')"><span class="window-title">📂 Explorador de Arquivos</span><button class="win-btn-close" onclick="closeWindow('win-explorer')">✕</button></div>
     <div class="window-body-padded">
       <div class="explorer-toolbar">
         <button class="btn btn-secondary" onclick="openExplorer('root')">🏠</button>
@@ -449,29 +461,47 @@
     </div>
   </div>
 
-  <!-- Janela: Revisor / Assistente Automático de Português (Novo) -->
-  <div class="window hidden" id="win-corrector" style="top:50px; left:90px; width:650px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-corrector')">
-      <span class="window-title">✍️ Assistente Inteligente de Português</span>
-      <button class="win-btn-close" onclick="closeWindow('win-corrector')">✕</button>
-    </div>
+  <div class="window hidden" id="win-calculator" style="top:70px; left:150px; width:330px; height:auto;">
+    <div class="window-header" onmousedown="dragWindow(event, 'win-calculator')"><span class="window-title">🧮 Calculadora</span><button class="win-btn-close" onclick="closeWindow('win-calculator')">✕</button></div>
     <div class="window-body-padded">
-      <p style="font-size:0.8rem; color:#64748b; margin-bottom:8px;">Cole seu texto abaixo. O assistente corrige erros gramaticais, ajusta iniciais maiúsculas em nomes próprios e formata o estilo:</p>
+      <input type="text" id="calc-display" readonly value="0" style="width:100%; height:50px; text-align:right; font-size:1.8rem; font-weight:800; padding:8px 12px; border-radius:12px; border:1px solid #cbd5e1; background:#ffffff; margin-bottom:10px; color:#0f172a;">
+      <div class="calc-grid">
+        <button class="calc-btn calc-btn-clear" onclick="calcClear()">C</button>
+        <button class="calc-btn calc-btn-op" onclick="calcAppend('/')">÷</button>
+        <button class="calc-btn calc-btn-op" onclick="calcAppend('*')">×</button>
+        <button class="calc-btn calc-btn-op" onclick="calcBackspace()">⌫</button>
+        <button class="calc-btn" onclick="calcAppend('7')">7</button>
+        <button class="calc-btn" onclick="calcAppend('8')">8</button>
+        <button class="calc-btn" onclick="calcAppend('9')">9</button>
+        <button class="calc-btn calc-btn-op" onclick="calcAppend('-')">-</button>
+        <button class="calc-btn" onclick="calcAppend('4')">4</button>
+        <button class="calc-btn" onclick="calcAppend('5')">5</button>
+        <button class="calc-btn" onclick="calcAppend('6')">6</button>
+        <button class="calc-btn calc-btn-op" onclick="calcAppend('+')">+</button>
+        <button class="calc-btn" onclick="calcAppend('1')">1</button>
+        <button class="calc-btn" onclick="calcAppend('2')">2</button>
+        <button class="calc-btn" onclick="calcAppend('3')">3</button>
+        <button class="calc-btn calc-btn-eq" style="grid-row: span 2; height: 100%;" onclick="calcCalculate()">=</button>
+        <button class="calc-btn" style="grid-column: span 2;" onclick="calcAppend('0')">0</button>
+        <button class="calc-btn" onclick="calcAppend('.')">,</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="window hidden" id="win-corrector" style="top:50px; left:90px; width:650px; height:auto;">
+    <div class="window-header" onmousedown="dragWindow(event, 'win-corrector')"><span class="window-title">✍️ Revisor de Português</span><button class="win-btn-close" onclick="closeWindow('win-corrector')">✕</button></div>
+    <div class="window-body-padded">
       <textarea id="corrector-input" rows="5" placeholder="Digite ou cole seu texto aqui..." style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.85rem; margin-bottom:8px;"></textarea>
       <div style="display:flex; gap:8px; margin-bottom:12px;">
         <button class="btn" onclick="corrigirTextoAutomatico()">✨ Corrigir & Capitalizar</button>
         <button class="btn btn-secondary" onclick="copiarTextoCorrigido()">📋 Copiar</button>
       </div>
-      <textarea id="corrector-output" rows="5" placeholder="Texto revisado aparecerá aqui..." readonly style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; font-size:0.85rem;"></textarea>
+      <textarea id="corrector-output" rows="5" placeholder="Texto revisado..." readonly style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; font-size:0.85rem;"></textarea>
     </div>
   </div>
 
-  <!-- Janela: Kanban -->
   <div class="window hidden" id="win-kanban" style="top:50px; left:80px; width:720px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-kanban')">
-      <span class="window-title">📊 Kanban de Projetos</span>
-      <button class="win-btn-close" onclick="closeWindow('win-kanban')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-kanban')"><span class="window-title">📊 Kanban de Projetos</span><button class="win-btn-close" onclick="closeWindow('win-kanban')">✕</button></div>
     <div class="window-body-padded">
       <div style="display:flex; gap:8px; margin-bottom:14px;">
         <input type="text" id="kanban-title" placeholder="Título da tarefa..." style="flex:1; padding:8px; border-radius:8px; border:1px solid #cbd5e1;">
@@ -491,26 +521,13 @@
     </div>
   </div>
 
-  <!-- Janela: Finanças -->
   <div class="window hidden" id="win-finance" style="top:60px; left:110px; width:540px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-finance')">
-      <span class="window-title">💰 Gestão Financeira</span>
-      <button class="win-btn-close" onclick="closeWindow('win-finance')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-finance')"><span class="window-title">💰 Gestão Financeira</span><button class="win-btn-close" onclick="closeWindow('win-finance')">✕</button></div>
     <div class="window-body-padded">
       <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:14px;">
-        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">ENTRADAS</span>
-          <h4 id="fin-in" style="color:#10b981; font-size:1.1rem; margin-top:2px;">R$ 0,00</h4>
-        </div>
-        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">SAÍDAS</span>
-          <h4 id="fin-out" style="color:#ef4444; font-size:1.1rem; margin-top:2px;">R$ 0,00</h4>
-        </div>
-        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">SALDO LÍQUIDO</span>
-          <h4 id="fin-total" style="color:var(--primary); font-size:1.1rem; margin-top:2px;">R$ 0,00</h4>
-        </div>
+        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;"><span style="font-size:0.75rem; color:#64748b; font-weight:700;">ENTRADAS</span><h4 id="fin-in" style="color:#10b981; font-size:1.1rem; margin-top:2px;">R$ 0,00</h4></div>
+        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;"><span style="font-size:0.75rem; color:#64748b; font-weight:700;">SAÍDAS</span><h4 id="fin-out" style="color:#ef4444; font-size:1.1rem; margin-top:2px;">R$ 0,00</h4></div>
+        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;"><span style="font-size:0.75rem; color:#64748b; font-weight:700;">SALDO</span><h4 id="fin-total" style="color:var(--primary); font-size:1.1rem; margin-top:2px;">R$ 0,00</h4></div>
       </div>
       <div style="display:flex; gap:6px; margin-bottom:12px;">
         <input type="text" id="fin-desc" placeholder="Descrição..." style="flex:1;">
@@ -522,12 +539,8 @@
     </div>
   </div>
 
-  <!-- Janela: Gerador QR -->
   <div class="window hidden" id="win-qrcode" style="top:70px; left:140px; width:400px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-qrcode')">
-      <span class="window-title">🔲 Gerador de QR Code</span>
-      <button class="win-btn-close" onclick="closeWindow('win-qrcode')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-qrcode')"><span class="window-title">🔲 Gerador QR Code</span><button class="win-btn-close" onclick="closeWindow('win-qrcode')">✕</button></div>
     <div class="window-body-padded" style="text-align:center;">
       <div class="form-group"><input type="text" id="qr-input" placeholder="Digite o link ou texto..." oninput="generateQRCode()"></div>
       <div id="qr-display" style="padding:15px; background:white; display:inline-block; border-radius:10px; border:1px solid #cbd5e1; margin-top:10px;">
@@ -537,23 +550,13 @@
     </div>
   </div>
 
-  <!-- Janela: Mk Agenda (Com iFrame externo) -->
   <div class="window hidden" id="win-calendar" style="top:50px; left:120px; width:750px; height:550px;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-calendar')">
-      <span class="window-title">📅 Mk Agenda</span>
-      <button class="win-btn-close" onclick="closeWindow('win-calendar')">✕</button>
-    </div>
-    <div class="window-body">
-      <iframe src="https://mkb-agenda.github.io/" style="width:100%; height:100%; border:none;"></iframe>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-calendar')"><span class="window-title">📅 Mk Agenda</span><button class="win-btn-close" onclick="closeWindow('win-calendar')">✕</button></div>
+    <div class="window-body"><iframe src="https://mkb-agenda.github.io/" style="width:100%; height:100%; border:none;"></iframe></div>
   </div>
 
-  <!-- Janela: Pomodoro -->
   <div class="window hidden" id="win-pomodoro" style="top:80px; left:160px; width:340px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-pomodoro')">
-      <span class="window-title">⏱️ Pomodoro</span>
-      <button class="win-btn-close" onclick="closeWindow('win-pomodoro')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-pomodoro')"><span class="window-title">⏱️ Pomodoro</span><button class="win-btn-close" onclick="closeWindow('win-pomodoro')">✕</button></div>
     <div class="window-body-padded" style="text-align:center;">
       <h1 id="pomo-timer" style="font-size:3rem; font-weight:800; color:var(--primary); margin:10px 0;">25:00</h1>
       <div style="display:flex; gap:8px; justify-content:center;">
@@ -564,12 +567,8 @@
     </div>
   </div>
 
-  <!-- Janela: Mídias (Upload salvo no Firebase) -->
   <div class="window hidden" id="win-media" style="top:60px; left:120px; width:520px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-media')">
-      <span class="window-title">🖼️ Fotos e Vídeos</span>
-      <button class="win-btn-close" onclick="closeWindow('win-media')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-media')"><span class="window-title">🖼️ Fotos e Vídeos</span><button class="win-btn-close" onclick="closeWindow('win-media')">✕</button></div>
     <div class="window-body-padded">
       <div class="form-group"><select id="media-folder-select"><option value="root">Área de Trabalho (Raiz)</option></select></div>
       <div class="form-group"><input type="file" accept="image/*,video/*" onchange="handleMediaUpload(event)"></div>
@@ -587,12 +586,8 @@
     <div class="window-body-padded" style="background:#000;"><video id="video-viewer-player" src="" controls style="width:100%; max-height:280px;"></video></div>
   </div>
 
-  <!-- Janela: Notas -->
   <div class="window hidden" id="win-notes" style="top:60px; left:80px; width:440px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-notes')">
-      <span class="window-title">📝 Bloco de Notas</span>
-      <button class="win-btn-close" onclick="closeWindow('win-notes')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-notes')"><span class="window-title">📝 Bloco de Notas</span><button class="win-btn-close" onclick="closeWindow('win-notes')">✕</button></div>
     <div class="window-body-padded">
       <input type="hidden" id="note-id">
       <div class="form-group"><select id="note-folder-select"><option value="root">Área de Trabalho (Raiz)</option></select></div>
@@ -602,12 +597,8 @@
     </div>
   </div>
 
-  <!-- Janela: Ajustes -->
   <div class="window hidden" id="win-settings" style="top:80px; left:160px; width:360px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-settings')">
-      <span class="window-title">⚙️ Ajustes do Sistema</span>
-      <button class="win-btn-close" onclick="closeWindow('win-settings')">✕</button>
-    </div>
+    <div class="window-header" onmousedown="dragWindow(event, 'win-settings')"><span class="window-title">⚙️ Ajustes</span><button class="win-btn-close" onclick="closeWindow('win-settings')">✕</button></div>
     <div class="window-body-padded">
       <div class="form-group"><label>Papel de Parede:</label><input type="file" accept="image/*" onchange="uploadWallpaper(event)"></div>
       <div style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
@@ -637,7 +628,9 @@
   </div>
 
   <script>
+    let auth = null;
     let db = null;
+    let currentUser = null;
     let userRefPath = '';
 
     let state = {
@@ -656,55 +649,86 @@
     let currentExplorerFolder = 'root';
     let pomodoroInterval = null;
     let pomoSeconds = 1500;
+    let calcExpression = '0';
 
     window.onload = () => {
       updateClock();
       setInterval(updateClock, 1000);
-      
-      const savedConfig = localStorage.getItem('virtual_os_firebase_config');
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        document.getElementById('fb-apikey').value = config.apiKey;
-        document.getElementById('fb-dburl').value = config.databaseURL;
-        document.getElementById('fb-user').value = config.userKey;
-        initFirebaseAndLoad(config.apiKey, config.databaseURL, config.userKey);
-      }
+      initFirebaseConnection();
     };
 
-    function fazerLoginFirebase() {
-      const apiKey = document.getElementById('fb-apikey').value.trim();
-      const databaseURL = document.getElementById('fb-dburl').value.trim();
-      const userKey = document.getElementById('fb-user').value.trim();
-
-      if (!apiKey || !databaseURL || !userKey) {
-        alert("Preencha todos os campos do Firebase!");
-        return;
-      }
-
-      localStorage.setItem('virtual_os_firebase_config', JSON.stringify({ apiKey, databaseURL, userKey }));
-      initFirebaseAndLoad(apiKey, databaseURL, userKey);
-    }
-
-    async function initFirebaseAndLoad(apiKey, databaseURL, userKey) {
+    function initFirebaseConnection() {
       try {
         const { initializeApp } = window.firebaseModules;
-        const { getDatabase, ref, get } = window.firebaseModules;
+        const { getAuth, onAuthStateChanged } = window.firebaseModules;
+        const { getDatabase } = window.firebaseModules;
 
-        const app = initializeApp({ apiKey, databaseURL }, 'VirtualOSApp');
+        // Configuração automática padrão do Firebase (ou insira sua config caso utilize um projeto próprio)
+        const firebaseConfig = {
+          apiKey: "AIzaSyDummyKeyForVirtualOS-App",
+          authDomain: "virtual-os-default.firebaseapp.com",
+          databaseURL: "https://virtual-os-default-rtdb.firebaseio.com",
+          projectId: "virtual-os-default"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
         db = getDatabase(app);
-        userRefPath = `users/${userKey.replace(/[.#$[\]]/g, "_")}`;
 
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            currentUser = user;
+            userRefPath = `users/${user.uid}`;
+            document.getElementById('login-screen').style.display = 'none';
+            await loadStateFromFirebase();
+            renderAll();
+          } else {
+            document.getElementById('login-screen').style.display = 'flex';
+          }
+        });
+      } catch (err) {
+        console.error("Erro ao iniciar Firebase:", err);
+      }
+    }
+
+    async function fazerLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      if (!email || !password) { alert("Preencha e-mail e senha!"); return; }
+
+      try {
+        const { signInWithEmailAndPassword } = window.firebaseModules;
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        alert("Erro no login: " + err.message);
+      }
+    }
+
+    async function fazerCadastro() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      if (!email || !password) { alert("Preencha e-mail e senha para criar a conta!"); return; }
+
+      try {
+        const { createUserWithEmailAndPassword } = window.firebaseModules;
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Conta criada com sucesso!");
+      } catch (err) {
+        alert("Erro no cadastro: " + err.message);
+      }
+    }
+
+    async function loadStateFromFirebase() {
+      if (!db || !userRefPath) return;
+      try {
+        const { ref, get } = window.firebaseModules;
         const snapshot = await get(ref(db, userRefPath));
         if (snapshot.exists()) {
           state = { ...state, ...snapshot.val() };
           if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
         }
-
-        document.getElementById('login-screen').style.display = 'none';
-        renderAll();
       } catch (err) {
-        console.error(err);
-        alert("Erro ao conectar ao Firebase. Verifique suas credenciais.");
+        console.error("Erro ao carregar dados:", err);
       }
     }
 
@@ -770,39 +794,47 @@
       document.getElementById('global-search-results').style.display = 'none';
     });
 
-    // Assistente de Correção de Português
+    /* Calculadora */
+    function calcAppend(val) {
+      if (calcExpression === '0' && val !== '.') { calcExpression = val; } else { calcExpression += val; }
+      document.getElementById('calc-display').value = calcExpression;
+    }
+    function calcClear() { calcExpression = '0'; document.getElementById('calc-display').value = calcExpression; }
+    function calcBackspace() {
+      calcExpression = calcExpression.length > 1 ? calcExpression.slice(0, -1) : '0';
+      document.getElementById('calc-display').value = calcExpression;
+    }
+    function calcCalculate() {
+      try {
+        calcExpression = eval(calcExpression).toString();
+        document.getElementById('calc-display').value = calcExpression;
+      } catch (e) {
+        document.getElementById('calc-display').value = 'Erro';
+        calcExpression = '0';
+      }
+    }
+
+    /* Revisor de Português */
     function corrigirTextoAutomatico() {
       let texto = document.getElementById('corrector-input').value;
       if (!texto) return;
-
-      // Correção de espaçamento e pontuação básica
       texto = texto.replace(/\s+/g, ' ');
       texto = texto.replace(/\s*([,.;?!])\s*/g, '$1 ');
-
-      // Capitalizar primeira letra após ponto, interrogação ou exclamação
       texto = texto.replace(/([.?!]\s+)([a-zà-ú])/g, (match, p1, p2) => p1 + p2.toUpperCase());
+      if (texto.length > 0) texto = texto.charAt(0).toUpperCase() + texto.slice(1);
 
-      // Capitalizar primeira letra do texto
-      if (texto.length > 0) {
-        texto = texto.charAt(0).toUpperCase() + texto.slice(1);
-      }
-
-      // Nomes próprios e dias da semana comuns em português
       const nomesProprios = ['brasil', 'portugal', 'sao paulo', 'rio de janeiro', 'joao', 'maria', 'fernando', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado', 'domingo', 'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
-      
       nomesProprios.forEach(nome => {
         const regex = new RegExp(`\\b${nome}\\b`, 'gi');
         texto = texto.replace(regex, (match) => match.charAt(0).toUpperCase() + match.slice(1).toLowerCase());
       });
-
       document.getElementById('corrector-output').value = texto.trim();
     }
-
     function copiarTextoCorrigido() {
       const output = document.getElementById('corrector-output');
       output.select();
       navigator.clipboard.writeText(output.value);
-      alert("Texto copiado para a área de transferência!");
+      alert("Texto copiado!");
     }
 
     function createNewFolder() {
@@ -825,34 +857,19 @@
     function renderExplorer(folderName = 'root') {
       const grid = document.getElementById('explorer-grid');
       grid.innerHTML = '';
-
       if (folderName === 'root' && state.folders) {
         state.folders.forEach(f => {
-          grid.innerHTML += `
-            <div class="file-card" onclick="openExplorer('${f}')">
-              <button class="file-delete-btn" onclick="moveToTrash(event, 'folder', '${f}')">✕</button>
-              📂<span>${f}</span>
-            </div>`;
+          grid.innerHTML += `<div class="file-card" onclick="openExplorer('${f}')"><button class="file-delete-btn" onclick="moveToTrash(event, 'folder', '${f}')">✕</button>📂<span>${f}</span></div>`;
         });
       }
-
       if (state.notes) {
         state.notes.filter(n => n.folder === folderName).forEach(n => {
-          grid.innerHTML += `
-            <div class="file-card" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')">
-              <button class="file-delete-btn" onclick="moveToTrash(event, 'note', '${n.id}')">✕</button>
-              📝<span>${n.title}</span>
-            </div>`;
+          grid.innerHTML += `<div class="file-card" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')"><button class="file-delete-btn" onclick="moveToTrash(event, 'note', '${n.id}')">✕</button>📝<span>${n.title}</span></div>`;
         });
       }
-
       if (state.mediaFiles) {
         state.mediaFiles.filter(m => m.folder === folderName).forEach(m => {
-          grid.innerHTML += `
-            <div class="file-card" onclick="openMediaFile('${m.id}')">
-              <button class="file-delete-btn" onclick="moveToTrash(event, 'media', '${m.id}')">✕</button>
-              ${m.type === 'image' ? '🖼️' : '🎬'}<span>${m.name}</span>
-            </div>`;
+          grid.innerHTML += `<div class="file-card" onclick="openMediaFile('${m.id}')"><button class="file-delete-btn" onclick="moveToTrash(event, 'media', '${m.id}')">✕</button>${m.type === 'image' ? '🖼️' : '🎬'}<span>${m.name}</span></div>`;
         });
       }
     }
@@ -860,7 +877,6 @@
     function moveToTrash(e, itemType, itemId) {
       e.stopPropagation();
       if (!state.trash) state.trash = [];
-
       if (itemType === 'folder') {
         state.folders = state.folders.filter(f => f !== itemId);
         state.trash.push({ id: 't-' + Date.now(), type: 'folder', name: itemId, data: itemId });
@@ -900,25 +916,18 @@
       const idx = state.trash.findIndex(t => t.id === trashId);
       if (idx < 0) return;
       const item = state.trash[idx];
-
       if (item.type === 'folder') { if(!state.folders) state.folders=[]; state.folders.push(item.data); }
       else if (item.type === 'note') { if(!state.notes) state.notes=[]; state.notes.push(item.data); }
       else if (item.type === 'media') { if(!state.mediaFiles) state.mediaFiles=[]; state.mediaFiles.push(item.data); }
-
       state.trash.splice(idx, 1);
       saveState();
       renderAll();
     }
 
     function emptyTrash() {
-      if (confirm("Deseja esvaziar a lixeira permanentemente?")) {
-        state.trash = [];
-        saveState();
-        renderAll();
-      }
+      if (confirm("Esvaziar lixeira?")) { state.trash = []; saveState(); renderAll(); }
     }
 
-    // Upload de Mídias (Fotos/Vídeos) salvo no Firebase
     function handleMediaUpload(e) {
       const file = e.target.files[0];
       const folder = document.getElementById('media-folder-select').value;
@@ -965,14 +974,11 @@
       let title = document.getElementById('note-title').value.trim();
       const body = document.getElementById('note-body').value;
       const folder = document.getElementById('note-folder-select').value;
-
       if (!title) title = 'Nota sem título';
       if (!state.notes) state.notes = [];
-
       const idx = state.notes.findIndex(n => n.id === id);
       if (idx >= 0) state.notes[idx] = { id, title, body, folder };
       else state.notes.push({ id, title, body, folder });
-
       saveState();
       closeWindow('win-notes');
       renderAll();
@@ -982,7 +988,7 @@
       let title = document.getElementById('kanban-title').value.trim();
       const priority = document.getElementById('kanban-priority').value;
       const date = document.getElementById('kanban-date').value;
-      if (!title) title = 'Tarefa sem título';
+      if (!title) title = 'Tarefa';
       if (!state.kanban) state.kanban = [];
       state.kanban.push({ id: 'k-' + Date.now(), title, priority, date, status: 'todo' });
       saveState();
@@ -1003,10 +1009,8 @@
       const done = document.getElementById('kanban-done');
       if (!todo) return;
       todo.innerHTML = ''; doing.innerHTML = ''; done.innerHTML = '';
-
       let cTodo = 0, cDoing = 0, cDone = 0;
       if (!state.kanban) state.kanban = [];
-
       state.kanban.forEach(item => {
         let tagClass = item.priority === 'alta' ? 'tag-alta' : item.priority === 'media' ? 'tag-media' : 'tag-baixa';
         const card = `
@@ -1023,7 +1027,6 @@
         else if (item.status === 'doing') { doing.innerHTML += card; cDoing++; }
         else { done.innerHTML += card; cDone++; }
       });
-
       document.getElementById('count-todo').innerText = `(${cTodo})`;
       document.getElementById('count-doing').innerText = `(${cDoing})`;
       document.getElementById('count-done').innerText = `(${cDone})`;
@@ -1065,7 +1068,6 @@
       if (!list) return;
       let totalIn = 0, totalOut = 0;
       if (!state.finance) state.finance = [];
-
       list.innerHTML = state.finance.map(f => {
         if (f.val >= 0) totalIn += f.val; else totalOut += Math.abs(f.val);
         return `
@@ -1078,7 +1080,6 @@
           </div>
         `;
       }).join('');
-
       let net = totalIn - totalOut;
       document.getElementById('fin-in').innerText = `R$ ${totalIn.toFixed(2)}`;
       document.getElementById('fin-out').innerText = `R$ ${totalOut.toFixed(2)}`;
@@ -1102,7 +1103,7 @@
         let m = Math.floor(pomoSeconds / 60);
         let s = pomoSeconds % 60;
         document.getElementById('pomo-timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-        if (pomoSeconds <= 0) { clearInterval(pomodoroInterval); alert('⏱️ Foco concluído!'); }
+        if (pomoSeconds <= 0) { clearInterval(pomodoroInterval); alert('Foco concluído!'); }
       }, 1000);
     }
     function pausePomodoro() { clearInterval(pomodoroInterval); pomodoroInterval = null; }
@@ -1130,13 +1131,11 @@
       const container = document.getElementById('widgets-container');
       container.innerHTML = '';
       if (!state.widgets) state.widgets = [];
-
       state.widgets.forEach(w => {
         const div = document.createElement('div');
         div.className = `draggable-widget ${w.locked ? 'locked' : ''}`;
         div.style.left = w.x + 'px';
         div.style.top = w.y + 'px';
-
         div.onmousedown = (e) => {
           if (w.locked || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
           let shiftX = e.clientX - div.getBoundingClientRect().left;
@@ -1150,7 +1149,6 @@
           document.addEventListener('mousemove', onMove);
           document.onmouseup = () => { document.removeEventListener('mousemove', onMove); saveState(); };
         };
-
         const lockIcon = w.locked ? '🔒' : '🔓';
         if (w.type === 'tasks') {
           div.innerHTML = `
@@ -1220,10 +1218,8 @@
       const resultsContainer = document.getElementById('global-search-results');
       const cleanQuery = query.trim().toLowerCase();
       if (!cleanQuery) { resultsContainer.style.display = 'none'; return; }
-
       let html = '';
       let matchCount = 0;
-
       if (state.notes) {
         const matchedNotes = state.notes.filter(n => n.title.toLowerCase().includes(cleanQuery) || n.body.toLowerCase().includes(cleanQuery));
         if (matchedNotes.length > 0) {
@@ -1234,15 +1230,15 @@
           });
         }
       }
-
       if (matchCount === 0) html = '<div style="font-size:0.8rem; color:#64748b; text-align:center; padding:10px;">Nenhum item encontrado.</div>';
       resultsContainer.innerHTML = html;
       resultsContainer.style.display = 'flex';
     }
 
-    function fazerLogout() {
-      if (confirm("Deseja desconectar do Firebase e sair?")) {
-        localStorage.removeItem('virtual_os_firebase_config');
+    async function fazerLogout() {
+      if (confirm("Deseja sair da conta?")) {
+        const { signOut } = window.firebaseModules;
+        await signOut(auth);
         location.reload();
       }
     }
