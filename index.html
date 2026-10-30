@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu OS Virtual - Profissional</title>
+  <title>Meu OS Virtual - Sistema Multi-Utilizador Corrigido</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -30,12 +30,12 @@
       user-select: none;
     }
 
-    /* Tela de Login e Cadastro Multi-usuário */
+    /* Tela de Autenticação */
     #auth-screen {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(12px);
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -43,7 +43,7 @@
     }
     .auth-card {
       background: #ffffff;
-      padding: 30px;
+      padding: 32px;
       border-radius: 20px;
       width: 400px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -56,13 +56,12 @@
       background: #f1f5f9;
       border-radius: 12px;
       padding: 4px;
-      margin-bottom: 4px;
     }
     .auth-tab {
       flex: 1;
       text-align: center;
-      padding: 8px;
-      font-size: 0.82rem;
+      padding: 10px;
+      font-size: 0.85rem;
       font-weight: 700;
       cursor: pointer;
       border-radius: 8px;
@@ -74,8 +73,8 @@
       color: var(--primary);
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
-    .auth-card h2 { font-size: 1.3rem; font-weight: 800; color: #0f172a; text-align: center; }
-    .auth-card p { font-size: 0.8rem; color: #64748b; text-align: center; }
+    .auth-card h2 { font-size: 1.4rem; font-weight: 800; color: #0f172a; text-align: center; }
+    .auth-card p { font-size: 0.82rem; color: #64748b; text-align: center; }
 
     /* Área de Trabalho */
     .desktop {
@@ -91,7 +90,6 @@
       z-index: 1;
     }
 
-    /* Ícones */
     .icon {
       display: flex;
       flex-direction: column;
@@ -107,19 +105,9 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       transition: transform 0.15s, background 0.15s;
     }
-    .icon:hover {
-      transform: translateY(-3px);
-      background: rgba(255, 255, 255, 0.3);
-    }
+    .icon:hover { transform: translateY(-3px); background: rgba(255, 255, 255, 0.3); }
     .icon svg { width: 36px; height: 36px; margin-bottom: 6px; }
-    .icon span {
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-align: center;
-      color: #ffffff;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      word-break: break-word;
-    }
+    .icon span { font-size: 0.75rem; font-weight: 600; text-align: center; color: #ffffff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
     /* Barra de Tarefas */
     .taskbar-container {
@@ -141,241 +129,45 @@
     }
 
     .start-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      white-space: nowrap;
+      color: white; border: none; padding: 8px 16px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer;
     }
-    .start-btn:hover { opacity: 0.9; }
-
-    /* Barra de Pesquisa Global */
-    .taskbar-search-box {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .taskbar-search-input {
-      background: rgba(255, 255, 255, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: white;
-      padding: 6px 12px 6px 30px;
-      border-radius: 12px;
-      font-size: 0.8rem;
-      outline: none;
-      width: 180px;
-      transition: width 0.2s, background 0.2s;
-    }
-    .taskbar-search-input::placeholder { color: rgba(255, 255, 255, 0.6); }
-    .taskbar-search-input:focus {
-      width: 260px;
-      background: rgba(255, 255, 255, 0.22);
-      border-color: var(--primary);
-    }
-    .taskbar-search-icon {
-      position: absolute;
-      left: 8px;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.6);
-      pointer-events: none;
-    }
-
-    /* Pop-up de Pesquisa Global */
-    .global-search-results {
-      position: absolute;
-      bottom: calc(var(--taskbar-height) + 15px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 460px;
-      max-height: 380px;
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--panel-border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 14px;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 9999;
-      overflow-y: auto;
-    }
-    .search-res-group { font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-top: 4px; }
-    .search-res-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    .search-res-item:hover { background: var(--primary); color: white; }
-    .search-res-path { font-size: 0.68rem; color: #64748b; font-weight: normal; }
-
-    .taskbar-clock {
-      color: #ffffff;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding-left: 8px;
-      border-left: 1px solid rgba(255,255,255,0.2);
-    }
-
-    /* Menu Iniciar */
-    .start-menu {
-      position: absolute;
-      bottom: calc(var(--taskbar-height) + 20px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: 440px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--panel-border);
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      padding: 18px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 9999;
-    }
-    .start-menu-title { font-size: 0.8rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
-    .start-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .start-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-      border-radius: 12px;
-      background: rgba(241, 245, 249, 0.8);
-      border: 1px solid #e2e8f0;
-      cursor: pointer;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #0f172a;
-      text-align: center;
-    }
-    .start-item:hover { background: var(--primary); color: white; }
-
-    /* Menu de Contexto */
-    .context-menu {
-      position: absolute;
-      background: #ffffff;
-      border: 1px solid var(--panel-border);
-      box-shadow: var(--shadow);
-      border-radius: 12px;
-      padding: 6px;
-      display: none;
-      flex-direction: column;
-      z-index: 10000;
-      width: 230px;
-    }
-    .context-menu button {
-      background: none; border: none; padding: 9px 12px; text-align: left; font-size: 0.82rem; font-weight: 600; color: var(--text-color); border-radius: 8px; cursor: pointer;
-    }
-    .context-menu button:hover { background: var(--primary); color: white; }
+    .taskbar-clock { color: #ffffff; font-size: 0.85rem; font-weight: 600; padding-left: 8px; border-left: 1px solid rgba(255,255,255,0.2); }
 
     /* Janelas */
     .window {
       position: absolute;
-      width: 700px;
-      height: 500px;
+      width: 680px; height: 480px;
       background: var(--panel-bg);
       backdrop-filter: blur(20px);
       border-radius: 18px;
       border: 1px solid var(--panel-border);
       box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: 100;
+      display: flex; flex-direction: column; overflow: hidden; z-index: 100;
     }
     .window-header {
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.85);
-      border-bottom: 1px solid var(--panel-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: move;
+      padding: 12px 16px; background: rgba(255, 255, 255, 0.85); border-bottom: 1px solid var(--panel-border);
+      display: flex; align-items: center; justify-content: space-between; cursor: move;
     }
     .window-title { font-size: 0.88rem; font-weight: 800; color: #0f172a; }
     .win-btn-close { width: 24px; height: 24px; border-radius: 50%; border: none; cursor: pointer; background: #ef4444; color:white; font-weight:bold; }
-    .window-body { padding: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .window-body-padded { padding: 16px; overflow-y: auto; max-height: 520px; }
+    .window-body-padded { padding: 16px; overflow-y: auto; flex: 1; }
 
     /* Calculadora */
     .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
-    .calc-btn {
-      padding: 16px; font-size: 1.2rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; color: #0f172a; cursor: pointer; transition: background 0.15s;
-    }
+    .calc-btn { padding: 16px; font-size: 1.2rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 12px; background: #f8fafc; cursor: pointer; }
     .calc-btn:hover { background: #e2e8f0; }
     .calc-btn-op { background: #6366f1; color: white; border-color: #4f46e5; }
     .calc-btn-clear { background: #ef4444; color: white; border-color: #dc2626; }
     .calc-btn-eq { background: #10b981; color: white; border-color: #059669; }
 
-    /* Widgets Arrastáveis */
-    .draggable-widget {
-      position: absolute;
-      width: 280px;
-      background: var(--panel-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--panel-border);
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: var(--shadow);
-      cursor: grab;
-      z-index: 10;
-    }
-    .draggable-widget.locked { cursor: default !important; border-color: var(--primary); }
-    .widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .widget-title { font-size: 0.85rem; font-weight: 800; }
-    .widget-btn { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: #64748b; }
-
-    /* Kanban Profissional */
-    .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .kanban-col { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; min-height: 280px; }
-    .kanban-col h4 { font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; color: #334155; text-transform: uppercase; display: flex; justify-content: space-between; }
-    .kanban-card { position: relative; background: white; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-    .kanban-tag { font-size: 0.65rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
-    .tag-alta { background: #fee2e2; color: #dc2626; }
-    .tag-media { background: #fef3c7; color: #d97706; }
-    .tag-baixa { background: #e0f2fe; color: #0284c7; }
-    .btn-delete-item { background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 0.85rem; }
-
-    /* Explorador */
-    .explorer-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: #f1f5f9; padding: 8px; border-radius: 10px; border: 1px solid #e2e8f0; }
-    .address-bar { flex: 1; background: white; padding: 6px 10px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.8rem; font-weight: 600; color: #475569; }
-
-    /* Arquivos */
-    .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; margin-top: 10px; }
-    .file-card { position: relative; display: flex; flex-direction: column; align-items: center; padding: 10px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; cursor: pointer; }
-    .file-card span { font-size: 0.72rem; text-align: center; font-weight: 600; margin-top: 4px; word-break: break-all; }
-    .file-delete-btn { position: absolute; top: 4px; right: 4px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: bold; cursor: pointer; display: none; }
-    .file-card:hover .file-delete-btn { display: flex; align-items: center; justify-content: center; }
-
-    /* Formulários e Botões */
+    /* Formulários */
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; font-size: 0.78rem; font-weight: 700; margin-bottom: 4px; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.85rem; background: #ffffff;
-    }
-
-    .btn { padding: 8px 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+    .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.85rem; }
+    .btn { padding: 10px 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
     .btn:hover { background: var(--primary-hover); }
-    .btn-secondary { background: #64748b; }
     .btn-danger { background: #ef4444; }
-
     .hidden { display: none !important; }
   </style>
 </head>
@@ -389,60 +181,40 @@
         <div class="auth-tab" id="tab-register-btn" onclick="switchAuthTab('register')">Criar Conta</div>
       </div>
 
-      <!-- Login -->
-      <div id="form-login">
+      <!-- Formulário de Login -->
+      <form id="form-login" onsubmit="fazerLogin(event)">
         <h2>🔐 Entrar no Sistema</h2>
-        <p>Acesse sua conta para carregar seus arquivos e dados salvos.</p>
-        <div class="form-group" style="margin-top:10px;"><label>E-mail ou Usuário</label><input type="text" id="login-user" placeholder="seu@email.com"></div>
-        <div class="form-group"><label>Senha</label><input type="password" id="login-pass" placeholder="Sua senha"></div>
-        <button class="btn" onclick="fazerLogin()" style="width:100%; margin-top:6px;">Entrar</button>
-      </div>
+        <p>Introduza as suas credenciais para carregar o seu ambiente.</p>
+        <div class="form-group" style="margin-top:12px;"><label>Nome de Utilizador</label><input type="text" id="login-user" required placeholder="ex: joaosilva"></div>
+        <div class="form-group"><label>Palavra-passe</label><input type="password" id="login-pass" required placeholder="Sua senha"></div>
+        <button type="submit" class="btn" style="width:100%; margin-top:8px;">Iniciar Sessão</button>
+      </form>
 
-      <!-- Cadastro -->
-      <div id="form-register" class="hidden">
-        <h2>✨ Criar Conta</h2>
-        <p>Seus dados, pastas e eventos ficarão salvos no seu usuário.</p>
-        <div class="form-group" style="margin-top:10px;"><label>Nome de Usuário</label><input type="text" id="reg-name" placeholder="ex: joaosilva"></div>
-        <div class="form-group"><label>E-mail</label><input type="email" id="reg-email" placeholder="seu@email.com"></div>
-        <div class="form-group"><label>Senha</label><input type="password" id="reg-pass" placeholder="Crie uma senha"></div>
-        <button class="btn" onclick="fazerCadastro()" style="width:100%; margin-top:6px;">Cadastrar</button>
-      </div>
+      <!-- Formulário de Cadastro -->
+      <form id="form-register" class="hidden" onsubmit="fazerCadastro(event)">
+        <h2>✨ Nova Conta</h2>
+        <p>Crie uma conta para salvar pastas, notas e agendamentos com segurança.</p>
+        <div class="form-group" style="margin-top:12px;"><label>Nome de Utilizador</label><input type="text" id="reg-name" required placeholder="ex: joaosilva"></div>
+        <div class="form-group"><label>E-mail</label><input type="email" id="reg-email" required placeholder="seu@email.com"></div>
+        <div class="form-group"><label>Palavra-passe</label><input type="password" id="reg-pass" required placeholder="Escolha uma senha"></div>
+        <button type="submit" class="btn" style="width:100%; margin-top:8px;">Criar e Entrar</button>
+      </form>
     </div>
   </div>
 
   <!-- Área de Trabalho -->
   <div class="desktop" id="desktop">
-    <div class="icon" onclick="openExplorer('root')">
-      <svg fill="none" stroke="#f59e0b" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-      <span>Explorador</span>
-    </div>
     <div class="icon" onclick="openWindow('win-pro-calendar')">
       <svg fill="none" stroke="#6366f1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
       <span>Calendário Pro</span>
     </div>
     <div class="icon" onclick="openWindow('win-calendar-site')">
       <svg fill="none" stroke="#ef4444" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-      <span>Mk Agenda (Site)</span>
+      <span>Mk Agenda</span>
     </div>
     <div class="icon" onclick="openWindow('win-calculator')">
       <svg fill="none" stroke="#10b981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
       <span>Calculadora</span>
-    </div>
-    <div class="icon" onclick="openWindow('win-finance')">
-      <svg fill="none" stroke="#10b981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      <span>Finanças Pro</span>
-    </div>
-    <div class="icon" onclick="openWindow('win-kanban')">
-      <svg fill="none" stroke="#3b82f6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
-      <span>Kanban Pro</span>
-    </div>
-    <div class="icon" onclick="openWindow('win-notes')">
-      <svg fill="none" stroke="#2563eb" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-      <span>Notas</span>
-    </div>
-    <div class="icon" onclick="openWindow('win-trash')">
-      <svg fill="none" stroke="#ef4444" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-      <span>Lixeira</span>
     </div>
     <div class="icon" onclick="openWindow('win-settings')">
       <svg fill="none" stroke="#64748b" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -450,74 +222,39 @@
     </div>
   </div>
 
-  <!-- Container de Widgets -->
-  <div id="widgets-container"></div>
-
-  <!-- Menu Iniciar -->
-  <div class="start-menu" id="start-menu">
-    <div class="start-menu-title">Aplicativos</div>
-    <div class="start-grid">
-      <div class="start-item" onclick="openExplorer('root'); toggleStartMenu();">📂 Explorador</div>
-      <div class="start-item" onclick="openWindow('win-pro-calendar'); toggleStartMenu();">📅 Calendário Pro</div>
-      <div class="start-item" onclick="openWindow('win-calendar-site'); toggleStartMenu();">🔗 Mk Agenda (Site)</div>
-      <div class="start-item" onclick="openWindow('win-calculator'); toggleStartMenu();">🧮 Calculadora</div>
-      <div class="start-item" onclick="openWindow('win-finance'); toggleStartMenu();">💰 Finanças Pro</div>
-      <div class="start-item" onclick="openWindow('win-kanban'); toggleStartMenu();">📊 Kanban Pro</div>
-      <div class="start-item" onclick="openWindow('win-notes'); toggleStartMenu();">📝 Notas</div>
-      <div class="start-item" onclick="openWindow('win-trash'); toggleStartMenu();">🗑️ Lixeira</div>
-      <div class="start-item" onclick="openWindow('win-settings'); toggleStartMenu();">⚙️ Ajustes</div>
-    </div>
-  </div>
-
-  <!-- Resultados da Pesquisa Global -->
-  <div class="global-search-results" id="global-search-results"></div>
-
-  <!-- Janela: APP Calendário Profissional Nativo -->
-  <div class="window hidden" id="win-pro-calendar" style="top:40px; left:90px; width:740px; height:560px;">
+  <!-- Janela: Calendário Profissional NATIVO -->
+  <div class="window hidden" id="win-pro-calendar" style="top:40px; left:90px; width:650px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-pro-calendar')">
-      <span class="window-title">📅 Calendário & Agenda Profissional</span>
+      <span class="window-title">📅 App Calendário & Agenda Profissional</span>
       <button class="win-btn-close" onclick="closeWindow('win-pro-calendar')">✕</button>
     </div>
     <div class="window-body-padded">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <h3 id="cal-month-year" style="font-weight:800; font-size:1.1rem; color:#0f172a;">Outubro 2026</h3>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-secondary" onclick="changeMonth(-1)">◀ Anterior</button>
-          <button class="btn btn-secondary" onclick="changeMonth(1)">Próximo ▶</button>
-        </div>
-      </div>
-
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-        <!-- Formulário de Agendamento -->
         <div style="background:#f8fafc; padding:14px; border-radius:12px; border:1px solid #e2e8f0;">
-          <h4 style="font-size:0.85rem; font-weight:800; margin-bottom:10px; color:#334155;">+ Novo Compromisso / Cliente</h4>
-          <div class="form-group"><label>Título / Serviço</label><input type="text" id="event-title" placeholder="ex: Corte de Cabelo / Reunião"></div>
-          <div class="form-group"><label>Nome do Cliente</label><input type="text" id="event-client" placeholder="ex: Maria Silva"></div>
+          <h4 style="font-size:0.85rem; font-weight:800; margin-bottom:10px;">+ Novo Compromisso</h4>
+          <div class="form-group"><label>Título</label><input type="text" id="event-title" placeholder="Atendimento / Reunião"></div>
+          <div class="form-group"><label>Cliente</label><input type="text" id="event-client" placeholder="Nome do cliente"></div>
           <div class="form-group" style="display:flex; gap:8px;">
             <div style="flex:1;"><label>Data</label><input type="date" id="event-date"></div>
-            <div style="flex:1;"><label>Horário</label><input type="time" id="event-time" value="09:00"></div>
+            <div style="flex:1;"><label>Hora</label><input type="time" id="event-time" value="09:00"></div>
           </div>
-          <button class="btn" onclick="addEvent()" style="width:100%;">Salvar na Agenda</button>
+          <button class="btn" onclick="addEvent()" style="width:100%;">Salvar Agendamento</button>
         </div>
-
-        <!-- Lista de Agendamentos do Dia Selecionado -->
         <div>
-          <h4 style="font-size:0.85rem; font-weight:800; margin-bottom:10px; color:#334155;">📋 Compromissos Salvos</h4>
-          <div id="events-list" style="display:flex; flex-direction:column; gap:8px; max-height:360px; overflow-y:auto;">
-            <!-- Itens dinâmicos -->
-          </div>
+          <h4 style="font-size:0.85rem; font-weight:800; margin-bottom:10px;">📋 Agendamentos Guardados</h4>
+          <div id="events-list" style="display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto;"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Janela: Atalho para o Site Externo Mk Agenda -->
-  <div class="window hidden" id="win-calendar-site" style="top:50px; left:120px; width:750px; height:550px;">
+  <!-- Janela: Atalho para Mk Agenda Externo -->
+  <div class="window hidden" id="win-calendar-site" style="top:50px; left:120px; width:700px; height:500px;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-calendar-site')">
-      <span class="window-title">🌐 Atalho do Site Mk Agenda</span>
+      <span class="window-title">🌐 Site Externo Mk Agenda</span>
       <button class="win-btn-close" onclick="closeWindow('win-calendar-site')">✕</button>
     </div>
-    <div class="window-body">
+    <div style="flex:1;">
       <iframe src="https://mkb-agenda.github.io/" style="width:100%; height:100%; border:none;"></iframe>
     </div>
   </div>
@@ -529,7 +266,7 @@
       <button class="win-btn-close" onclick="closeWindow('win-calculator')">✕</button>
     </div>
     <div class="window-body-padded">
-      <input type="text" id="calc-display" readonly value="0" style="width:100%; height:50px; text-align:right; font-size:1.8rem; font-weight:800; padding:8px 12px; border-radius:12px; border:1px solid #cbd5e1; background:#ffffff; margin-bottom:10px; color:#0f172a;">
+      <input type="text" id="calc-display" readonly value="0" style="width:100%; height:45px; text-align:right; font-size:1.6rem; font-weight:800; padding:6px 12px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom:10px;">
       <div class="calc-grid">
         <button class="calc-btn calc-btn-clear" onclick="calcClear()">C</button>
         <button class="calc-btn calc-btn-op" onclick="calcAppend('/')">÷</button>
@@ -553,169 +290,42 @@
     </div>
   </div>
 
-  <!-- Janela: Lixeira -->
-  <div class="window hidden" id="win-trash" style="top:60px; left:120px; width:540px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-trash')">
-      <span class="window-title">🗑️ Lixeira do Sistema</span>
-      <button class="win-btn-close" onclick="closeWindow('win-trash')">✕</button>
-    </div>
-    <div class="window-body-padded">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <span style="font-size:0.8rem; font-weight:700; color:#64748b;">Itens Removidos</span>
-        <button class="btn btn-danger" onclick="emptyTrash()">Esvaziar Lixeira</button>
-      </div>
-      <div id="trash-list" style="display:flex; flex-direction:column; gap:6px;"></div>
-    </div>
-  </div>
-
-  <!-- Janela: Explorador de Arquivos -->
-  <div class="window hidden" id="win-explorer" style="top:50px; left:100px; width:620px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-explorer')">
-      <span class="window-title">📂 Explorador de Arquivos</span>
-      <button class="win-btn-close" onclick="closeWindow('win-explorer')">✕</button>
-    </div>
-    <div class="window-body-padded">
-      <div class="explorer-toolbar">
-        <button class="btn btn-secondary" onclick="openExplorer('root')">🏠</button>
-        <div class="address-bar" id="explorer-address">Este Computador / Área de Trabalho</div>
-        <button class="btn" onclick="createNewFolder()">+ Nova Pasta</button>
-      </div>
-      <div class="file-grid" id="explorer-grid"></div>
-    </div>
-  </div>
-
-  <!-- Janela: Kanban Profissional -->
-  <div class="window hidden" id="win-kanban" style="top:50px; left:80px; width:720px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-kanban')">
-      <span class="window-title">📊 Kanban de Projetos</span>
-      <button class="win-btn-close" onclick="closeWindow('win-kanban')">✕</button>
-    </div>
-    <div class="window-body-padded">
-      <div style="display:flex; gap:8px; margin-bottom:14px;">
-        <input type="text" id="kanban-title" placeholder="Título da tarefa..." style="flex:1; padding:8px; border-radius:8px; border:1px solid #cbd5e1;">
-        <select id="kanban-priority" style="width:120px; padding:8px; border-radius:8px; border:1px solid #cbd5e1;">
-          <option value="alta">🔴 Alta</option>
-          <option value="media" selected>🟡 Média</option>
-          <option value="baixa">🔵 Baixa</option>
-        </select>
-        <button class="btn" onclick="addKanbanTask()">Adicionar</button>
-      </div>
-      <div class="kanban-board">
-        <div class="kanban-col"><h4>A Fazer <span id="count-todo">0</span></h4><div id="kanban-todo"></div></div>
-        <div class="kanban-col"><h4>Em Andamento <span id="count-doing">0</span></h4><div id="kanban-doing"></div></div>
-        <div class="kanban-col"><h4>Concluído <span id="count-done">0</span></h4><div id="kanban-done"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Janela: Finanças -->
-  <div class="window hidden" id="win-finance" style="top:60px; left:110px; width:540px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-finance')">
-      <span class="window-title">💰 Gestão Financeira</span>
-      <button class="win-btn-close" onclick="closeWindow('win-finance')">✕</button>
-    </div>
-    <div class="window-body-padded">
-      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:14px;">
-        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">ENTRADAS</span>
-          <h4 id="fin-in" style="color:#10b981; font-size:1.1rem;">R$ 0,00</h4>
-        </div>
-        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">SAÍDAS</span>
-          <h4 id="fin-out" style="color:#ef4444; font-size:1.1rem;">R$ 0,00</h4>
-        </div>
-        <div style="background:#f8fafc; padding:10px; border-radius:10px; border:1px solid #e2e8f0; text-align:center;">
-          <span style="font-size:0.75rem; color:#64748b; font-weight:700;">SALDO</span>
-          <h4 id="fin-total" style="color:var(--primary); font-size:1.1rem;">R$ 0,00</h4>
-        </div>
-      </div>
-      <div style="display:flex; gap:6px; margin-bottom:12px;">
-        <input type="text" id="fin-desc" placeholder="Descrição..." style="flex:1;">
-        <input type="number" id="fin-val" placeholder="R$" style="width:90px;">
-        <select id="fin-type" style="width:100px;"><option value="in">Receita</option><option value="out">Despesa</option></select>
-        <button class="btn" onclick="addTransaction()">Lançar</button>
-      </div>
-      <div id="fin-list" style="display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto;"></div>
-    </div>
-  </div>
-
-  <!-- Janela: Notas -->
-  <div class="window hidden" id="win-notes" style="top:60px; left:80px; width:440px; height:auto;">
-    <div class="window-header" onmousedown="dragWindow(event, 'win-notes')">
-      <span class="window-title">📝 Bloco de Notas</span>
-      <button class="win-btn-close" onclick="closeWindow('win-notes')">✕</button>
-    </div>
-    <div class="window-body-padded">
-      <input type="hidden" id="note-id">
-      <div class="form-group"><input type="text" id="note-title" placeholder="Título do Documento..."></div>
-      <div class="form-group"><textarea id="note-body" rows="5" placeholder="Escreva aqui..."></textarea></div>
-      <button class="btn" onclick="saveNote()" style="width:100%;">Salvar Nota</button>
-    </div>
-  </div>
-
   <!-- Janela: Ajustes -->
   <div class="window hidden" id="win-settings" style="top:80px; left:160px; width:360px; height:auto;">
     <div class="window-header" onmousedown="dragWindow(event, 'win-settings')">
-      <span class="window-title">⚙️ Ajustes do Sistema</span>
+      <span class="window-title">⚙️ Ajustes da Conta</span>
       <button class="win-btn-close" onclick="closeWindow('win-settings')">✕</button>
     </div>
     <div class="window-body-padded">
-      <div class="form-group"><label>Papel de Parede:</label><input type="file" accept="image/*" onchange="uploadWallpaper(event)"></div>
-      <div style="margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-        <button class="btn btn-danger" style="width: 100%;" onclick="fazerLogout()">Sair da Conta</button>
-      </div>
+      <p style="font-size:0.85rem; margin-bottom:12px;">Sessão iniciada como: <b id="user-display-name">--</b></p>
+      <button class="btn btn-danger" style="width: 100%;" onclick="fazerLogout()">Terminar Sessão</button>
     </div>
-  </div>
-
-  <!-- Menu de Contexto -->
-  <div class="context-menu" id="context-menu">
-    <button onclick="openNoteEditor()">📝 Criar Nota</button>
-    <button onclick="createNewFolder()">📁 Criar Pasta</button>
-    <button onclick="addWidgetToDesktop('clock')">⏰ Widget Relógio</button>
-    <button onclick="addWidgetToDesktop('postit')">📝 Widget Post-it</button>
   </div>
 
   <!-- Barra de Tarefas -->
   <div class="taskbar-container">
-    <button class="start-btn" onclick="toggleStartMenu(event)">🚀 Iniciar</button>
-    
-    <div class="taskbar-search-box">
-      <span class="taskbar-search-icon">🔍</span>
-      <input type="text" class="taskbar-search-input" id="global-search-input" placeholder="Pesquisar..." oninput="handleGlobalSearch(this.value)" onclick="event.stopPropagation()">
-    </div>
-
-    <div class="taskbar-clock" id="taskbar-clock">14:38</div>
+    <button class="start-btn">🚀 Iniciar</button>
+    <div class="taskbar-clock" id="taskbar-clock">00:00</div>
   </div>
 
   <script>
     let currentUser = null;
-    let state = {
-      wallpaper: '',
-      folders: [],
-      notes: [],
-      tasks: [],
-      events: [],
-      finance: [],
-      kanban: [],
-      trash: [],
-      widgets: [],
-      postItText: ''
-    };
-
-    let currentExplorerFolder = 'root';
+    let state = { events: [] };
     let calcExpression = '0';
 
     window.onload = () => {
+      updateClock();
+      setInterval(updateClock, 1000);
+      document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
+
+      // Verificar utilizador com sessão ativa
       const activeUser = localStorage.getItem('virtual_os_active_user');
       if (activeUser) {
         currentUser = activeUser;
         document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('user-display-name').innerText = currentUser;
         loadState();
       }
-      updateClock();
-      setInterval(updateClock, 1000);
-      document.getElementById('event-date').value = new Date().toISOString().split('T')[0];
-      renderAll();
     };
 
     function switchAuthTab(tab) {
@@ -732,122 +342,93 @@
       }
     }
 
-    function fazerLogin() {
-      const user = document.getElementById('login-user').value.trim();
+    function fazerLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('login-user').value.trim().toLowerCase();
       const pass = document.getElementById('login-pass').value.trim();
-      if (!user || !pass) { alert('Preencha todos os campos!'); return; }
 
       const usersDb = JSON.parse(localStorage.getItem('virtual_os_users_db') || '{}');
+
       if (usersDb[user] && usersDb[user].pass === pass) {
         currentUser = user;
         localStorage.setItem('virtual_os_active_user', currentUser);
+        document.getElementById('user-display-name').innerText = currentUser;
         document.getElementById('auth-screen').style.display = 'none';
         loadState();
-        renderAll();
       } else {
-        alert('Usuário ou senha incorretos, ou conta inexistente.');
+        alert('Nome de utilizador ou palavra-passe incorretos!');
       }
     }
 
-    function fazerCadastro() {
-      const user = document.getElementById('reg-name').value.trim();
+    function fazerCadastro(e) {
+      e.preventDefault();
+      const user = document.getElementById('reg-name').value.trim().toLowerCase();
       const email = document.getElementById('reg-email').value.trim();
       const pass = document.getElementById('reg-pass').value.trim();
-      if (!user || !email || !pass) { alert('Preencha tudo para cadastrar!'); return; }
+
+      if (!user || !email || !pass) {
+        alert('Preencha todos os campos!');
+        return;
+      }
 
       const usersDb = JSON.parse(localStorage.getItem('virtual_os_users_db') || '{}');
-      if (usersDb[user]) { alert('Esse usuário já existe.'); return; }
 
+      if (usersDb[user]) {
+        alert('Este nome de utilizador já existe. Escolha outro.');
+        return;
+      }
+
+      // Registar novo utilizador
       usersDb[user] = { email, pass };
       localStorage.setItem('virtual_os_users_db', JSON.stringify(usersDb));
 
+      // Iniciar sessão automaticamente
       currentUser = user;
       localStorage.setItem('virtual_os_active_user', currentUser);
+      document.getElementById('user-display-name').innerText = currentUser;
 
-      state = {
-        wallpaper: '',
-        folders: ['Documentos', 'Projetos'],
-        notes: [{ id: 'n-1', title: 'Boas-vindas', folder: 'root', body: 'Bem-vindo ao seu sistema!' }],
-        tasks: [],
-        events: [],
-        finance: [],
-        kanban: [],
-        trash: [],
-        widgets: [],
-        postItText: 'Lembrete!'
-      };
+      // Estado inicial limpo
+      state = { events: [] };
       saveState();
+
       document.getElementById('auth-screen').style.display = 'none';
-      renderAll();
+      renderEvents();
+      alert('Conta criada com sucesso!');
     }
 
     function fazerLogout() {
-      if (confirm("Sair da conta atual?")) {
+      if (confirm("Deseja realmente terminar a sessão?")) {
         localStorage.removeItem('virtual_os_active_user');
         location.reload();
       }
     }
 
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('taskbar-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    function saveState() {
+      if (!currentUser) return;
+      localStorage.setItem(`virtual_os_data_${currentUser}`, JSON.stringify(state));
     }
 
-    function renderAll() {
-      renderFolders();
-      renderExplorer(currentExplorerFolder);
-      renderTrash();
-      renderWidgets();
-      renderFinance();
-      renderKanban();
+    function loadState() {
+      if (!currentUser) return;
+      const saved = localStorage.getItem(`virtual_os_data_${currentUser}`);
+      if (saved) {
+        state = JSON.parse(saved);
+      } else {
+        state = { events: [] };
+      }
       renderEvents();
     }
 
-    function toggleStartMenu(e) {
-      if (e) e.stopPropagation();
-      const menu = document.getElementById('start-menu');
-      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    function openWindow(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeWindow(id) { document.getElementById(id).classList.add('hidden'); }
-
-    function dragWindow(e, id) {
-      const win = document.getElementById(id);
-      let shiftX = e.clientX - win.getBoundingClientRect().left;
-      let shiftY = e.clientY - win.getBoundingClientRect().top;
-      function onMove(ev) {
-        win.style.left = ev.clientX - shiftX + 'px';
-        win.style.top = ev.clientY - shiftY + 'px';
-      }
-      document.addEventListener('mousemove', onMove);
-      document.onmouseup = () => document.removeEventListener('mousemove', onMove);
-    }
-
-    function openContextMenu(e) {
-      if (e.target.closest('.window') || e.target.closest('.draggable-widget')) return;
-      e.preventDefault();
-      const menu = document.getElementById('context-menu');
-      menu.style.display = 'flex';
-      menu.style.left = e.pageX + 'px';
-      menu.style.top = e.pageY + 'px';
-    }
-
-    document.addEventListener('click', () => {
-      document.getElementById('start-menu').style.display = 'none';
-      document.getElementById('context-menu').style.display = 'none';
-      document.getElementById('global-search-results').style.display = 'none';
-    });
-
-    /* Calendário Pro */
+    /* Agendamentos */
     function addEvent() {
       const title = document.getElementById('event-title').value.trim();
       const client = document.getElementById('event-client').value.trim();
       const date = document.getElementById('event-date').value;
       const time = document.getElementById('event-time').value;
 
-      if (!title || !date) { alert('Informe pelo menos o título e a data!'); return; }
+      if (!title || !date) { alert('Preencha o título e a data!'); return; }
 
+      if (!state.events) state.events = [];
       state.events.push({ id: 'ev-' + Date.now(), title, client, date, time });
       saveState();
       renderEvents();
@@ -875,7 +456,7 @@
         <div style="background:white; padding:10px; border-radius:10px; border:1px solid #cbd5e1; font-size:0.8rem;">
           <div style="display:flex; justify-content:space-between; font-weight:700;">
             <span>📅 ${ev.date} às ${ev.time}</span>
-            <button class="btn-delete-item" onclick="removeEvent('${ev.id}')">✕</button>
+            <button style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer;" onclick="removeEvent('${ev.id}')">✕</button>
           </div>
           <div style="font-size:0.85rem; font-weight:800; color:var(--primary); margin-top:2px;">${ev.title}</div>
           ${ev.client ? `<div style="color:#64748b; font-size:0.75rem;">👤 Cliente: ${ev.client}</div>` : ''}
@@ -904,82 +485,27 @@
       }
     }
 
-    /* Explorador e Sistema */
-    function createNewFolder() {
-      let name = prompt("Nome da Nova Pasta:");
-      if (!name) return;
-      state.folders.push(name.trim());
-      saveState();
-      renderAll();
+    /* Utilitários da Interface */
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('taskbar-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-
-    function openExplorer(folderName = 'root') {
-      currentExplorerFolder = folderName;
-      document.getElementById('explorer-address').innerText = folderName === 'root' ? 'Este Computador / Área de Trabalho' : `Este Computador / ${folderName}`;
-      renderExplorer(folderName);
-      openWindow('win-explorer');
-    }
-
-    function renderExplorer(folderName = 'root') {
-      const grid = document.getElementById('explorer-grid');
-      grid.innerHTML = '';
-
-      if (folderName === 'root') {
-        state.folders.forEach(f => {
-          grid.innerHTML += `<div class="file-card" onclick="openExplorer('${f}')">📂<span>${f}</span></div>`;
-        });
+    function openWindow(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeWindow(id) { document.getElementById(id).classList.add('hidden'); }
+    function dragWindow(e, id) {
+      const win = document.getElementById(id);
+      let shiftX = e.clientX - win.getBoundingClientRect().left;
+      let shiftY = e.clientY - win.getBoundingClientRect().top;
+      function onMove(ev) {
+        win.style.left = ev.clientX - shiftX + 'px';
+        win.style.top = ev.clientY - shiftY + 'px';
       }
-
-      state.notes.filter(n => n.folder === folderName).forEach(n => {
-        grid.innerHTML += `<div class="file-card" onclick="openNoteEditor('${n.id}', '${n.title}', '${n.folder}', '${encodeURIComponent(n.body)}')">📝<span>${n.title}</span></div>`;
-      });
+      document.addEventListener('mousemove', onMove);
+      document.onmouseup = () => document.removeEventListener('mousemove', onMove);
     }
-
-    function openNoteEditor(id = '', title = '', folder = 'root', body = '') {
-      document.getElementById('note-id').value = id || 'n-' + Date.now();
-      document.getElementById('note-title').value = title;
-      document.getElementById('note-body').value = body ? decodeURIComponent(body) : '';
-      openWindow('win-notes');
-    }
-
-    function saveNote() {
-      const id = document.getElementById('note-id').value;
-      let title = document.getElementById('note-title').value.trim() || 'Sem Título';
-      const body = document.getElementById('note-body').value;
-
-      const idx = state.notes.findIndex(n => n.id === id);
-      if (idx >= 0) state.notes[idx] = { id, title, body, folder: 'root' };
-      else state.notes.push({ id, title, body, folder: 'root' });
-
-      saveState();
-      closeWindow('win-notes');
-      renderAll();
-    }
-
-    function saveState() {
-      if (!currentUser) return;
-      localStorage.setItem(`virtual_os_state_${currentUser}`, JSON.stringify(state));
-    }
-
-    function loadState() {
-      if (!currentUser) return;
-      const saved = localStorage.getItem(`virtual_os_state_${currentUser}`);
-      if (saved) {
-        state = { ...state, ...JSON.parse(saved) };
-        if (state.wallpaper) document.body.style.backgroundImage = `url(${state.wallpaper})`;
-      }
-    }
-
-    function uploadWallpaper(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        state.wallpaper = event.target.result;
-        document.body.style.backgroundImage = `url(${state.wallpaper})`;
-        saveState();
-      };
-      reader.readAsDataURL(file);
+    function openContextMenu(e) {
+      if (e.target.closest('.window')) return;
+      e.preventDefault();
     }
   </script>
 </body>
